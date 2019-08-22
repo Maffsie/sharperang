@@ -21,15 +21,23 @@ namespace libsharperang {
 			// the printer from usbprint to WinUSB
 			if (UsbDevice.AllWinUsbDevices.Count == 0) return false;
 			//genuinely just having some fun with Linq, don't judge me.
+			//TODO: work out a way of distinguishing multiple devices with same GUID
+			// which happens when two of the same device are connected
+			// the only thing that differs seemingly is the Address
 			pInstances = (from d in UsbDevice.AllWinUsbDevices
 										where d.Vid == idVendor && d.Pid == idProduct
 										select d)
 										.ToList<UsbRegistry>();
 			pIds = (from d in pInstances
 							select d.DeviceInterfaceGuids[0])
-							//.Distinct()
+							.Distinct()
 							.ToList<Guid>();
 			return (pIds.Count > 0);
+		}
+		public List<int> GetAddressesFromGuid(Guid deviceId) {
+			return (from d in UsbDevice.AllWinUsbDevices
+							where d.DeviceInterfaceGuids.Contains(deviceId)
+							select d.DeviceProperties.Where(k => k.Key=="Address").FirstOrDefault().Value).ToList().ConvertAll(v => (int)v);
 		}
 		public bool OpenUSB() {
 			if (UsbDevice.AllWinUsbDevices.Count == 0) return false;
@@ -37,15 +45,26 @@ namespace libsharperang {
 			return OpenUSB(pIds.FirstOrDefault());
 		}
 		public bool OpenUSB(Guid deviceId) {
-			bool OpenResult = UsbDevice.OpenUsbDevice(
-				ref deviceId, out UsbDevice handle);
+			return OpenUSB(deviceId, GetAddressesFromGuid(deviceId).FirstOrDefault());
+		}
+		public bool OpenUSB(Guid deviceId, int deviceIndex) {
+			//first thought is to say "forgive me lord for i have sinned" but i am absolutely not repentant for this
+			bool OpenResult = (from d in UsbDevice.AllWinUsbDevices
+												 where d.DeviceInterfaceGuids.Contains(deviceId) && 
+														d.DeviceProperties.Where(k=>k.Key=="Address" && (int)k.Value==deviceIndex).Count() > 0
+												 select d)
+												 .FirstOrDefault()
+												 .Open(out UsbDevice handle);
 			printer=handle;
 			return OpenResult;
 		}
 
 		public string FoundPrinterGuids() => pIds
-																					.ConvertAll<string>(p => p.ToString())
+																					.ConvertAll(p => p.ToString())
 																					.Aggregate((a, b) => a+","+b);
+		public string FoundPrinterGuidAddrs(Guid deviceId) => GetAddressesFromGuid(deviceId)
+																													.ConvertAll(a => a.ToString())
+																													.Aggregate((a, b) => a+","+b);
 		public string FoundProdIds() => printer?.Info.ProductString;
 	}
 }

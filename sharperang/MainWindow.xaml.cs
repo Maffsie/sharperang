@@ -25,6 +25,8 @@ namespace sharperang {
 			printer = new libsharperang.USB();
 			logger.Debug("libusb init gave "+printer.InitUSB());
 			logger.Debug("found Guids are "+printer.FoundPrinterGuids());
+			printer.pIds.ForEach(p => logger.Debug("found Addrs for guid "+p.ToString()+" are "+printer.FoundPrinterGuidAddrs(p)));
+			logger.Debug("open gave "+printer.OpenUSB(printer.pIds[0]));
 		}
 	}
 }
