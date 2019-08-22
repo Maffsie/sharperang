@@ -8,6 +8,7 @@
     <PackageReference Include="Device.Net" Version="3.0.0" />
     <PackageReference Include="LibUsbDotNet" Version="2.2.29" />
     <PackageReference Include="NativeUsbLib" Version="1.4.6" />
+    <PackageReference Include="Vadavo.NEscPos" Version="0.0.4" />
     <PackageReference Include="WinUSBNet" Version="1.0.3" />
   </ItemGroup>
 

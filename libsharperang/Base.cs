@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Vadavo.NEscPos;
+using Vadavo.NEscPos.Printable;
 
 namespace libsharperang {
 	public abstract class Base {
