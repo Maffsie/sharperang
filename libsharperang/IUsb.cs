@@ -11,6 +11,7 @@ namespace libsharperang
         internal UsbDevice iPrinter;
         private UsbEndpointReader pReader;
         private UsbEndpointWriter pWriter;
+        public bool Initialised() => (bool)iPrinter?.IsOpen;
         public void Dispose()
         {
             pReader?.Dispose();
@@ -23,7 +24,7 @@ namespace libsharperang
 
         public byte[] Read()
         {
-            if (pReader == null) pReader = iPrinter.OpenEndpointReader(LibUsbDotNet.Main.ReadEndpointID.Ep01);
+            if (pReader == null) pReader = iPrinter?.OpenEndpointReader(LibUsbDotNet.Main.ReadEndpointID.Ep01);
             byte[] bRead = new byte[1024];
             _ = pReader.Read(bRead, 100, out int _);
             return bRead;
@@ -31,7 +32,7 @@ namespace libsharperang
 
         public void Write(byte[] data)
         {
-            if (pWriter == null) pWriter = iPrinter.OpenEndpointWriter(LibUsbDotNet.Main.WriteEndpointID.Ep01);
+            if (pWriter == null) pWriter = iPrinter?.OpenEndpointWriter(LibUsbDotNet.Main.WriteEndpointID.Ep01);
             pWriter?.Write(data, 100, out int _);
         }
     }

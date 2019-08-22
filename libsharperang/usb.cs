@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using LibUsbDotNet;
 using LibUsbDotNet.Main;
-using Vadavo.NEscPos.Connectors;
+using Vadavo.NEscPos;
 
 namespace libsharperang {
 	public class USB : Base {
@@ -16,14 +16,19 @@ namespace libsharperang {
         //Notable is that the idV and idP appear to belong not to Paperang, but to a generic CH34x printer adaptor device
         // so it should be a constraint to check that the device descriptors match known details for supported devices,
         // not just idV and idP
-		public UsbDevice printer;
+		public UsbDevice pDevice;
 		public List<UsbRegistry> pInstances;
 		public List<Guid> pIds;
         public IUsb pUsb;
 
 		public USB() {
 			ActiveConnectionType=ConnectionType.USB;
+            InitUSB();
 		}
+        ~USB() => CloseUSB();
+
+        new internal bool InitialiseConnection() => InitUSB();
+
 
 		public bool InitUSB() {
 			//NOTE - in order for this to work, you must use Zadig to change the driver for
@@ -44,19 +49,15 @@ namespace libsharperang {
 							.ToList<Guid>();
 			return (pIds.Count > 0);
 		}
-		public List<int> GetAddressesFromGuid(Guid deviceId) {
-			return (from d in UsbDevice.AllDevices
+		public List<int> GetAddressesFromGuid(Guid deviceId) => (from d in UsbDevice.AllDevices
 							where d.DeviceInterfaceGuids.Contains(deviceId)
 							select d.DeviceProperties.Where(k => k.Key=="Address").FirstOrDefault().Value).ToList().ConvertAll(v => (int)v);
-		}
 		public bool OpenUSB() {
 			if (UsbDevice.AllDevices.Count == 0) return false;
 			if (pIds.Count == 0) return false;
 			return OpenUSB(pIds.FirstOrDefault());
 		}
-		public bool OpenUSB(Guid deviceId) {
-			return OpenUSB(deviceId, GetAddressesFromGuid(deviceId).FirstOrDefault());
-		}
+		public bool OpenUSB(Guid deviceId) => OpenUSB(deviceId, GetAddressesFromGuid(deviceId).FirstOrDefault());
 		public bool OpenUSB(Guid deviceId, int deviceIndex) {
 			//first thought is to say "forgive me lord for i have sinned" but i am absolutely not repentant for this
 			bool OpenResult = (from d in UsbDevice.AllDevices
@@ -65,37 +66,27 @@ namespace libsharperang {
 												 select d)
 												 .FirstOrDefault()
 												 .Open(out UsbDevice handle);
-			printer=handle;
+			pDevice=handle;
 			return OpenResult;
 		}
 
         public bool ClaimUSB()
         {
-            if (printer is null || printer.IsOpen) return false;
-            IUsbDevice p = printer as IUsbDevice;
+            if (pDevice is null || pDevice.IsOpen) return false;
+            IUsbDevice p = pDevice as IUsbDevice;
             p?.SetConfiguration(1);
             p?.ClaimInterface(0);
-            pUsb.iPrinter = printer;
+            pUsb.iPrinter = pDevice;
+            printer = new Printer(pUsb);
             return true;
         }
 
-        
-
-        /*
-         * TODO PollPrinter
-         * disassembly of Paperang for Mac comes up with the following
-         * method.Printer.checkConnect() does:
-         * * method.Printer.checkConnectFlag() && return something
-         * 0x01a022300
-         * 0xffffffff
-         * 0x00000000963007772c610eeeba51099919c46d078ff4
-         * 
-         * need to USBPcap the mac software's comms to confirm above
-         * 
-         * Paperang for Windows does completely different.
-         * ...apparently when the USB URB_CONTROL response says "COMMAND SET:ESC/POS" that means you literally just communicate with it using the ESC/POS protocol
-         * ...so i've wasted a lot of time trying to reverse-engineer an open spec..
-         */
+        public bool CloseUSB()
+        {
+            pUsb?.Dispose();
+            pDevice?.Close();
+            return true;
+        }
 
 		public string FoundPrinterGuids() => pIds
 																					.ConvertAll(p => p.ToString())
@@ -103,6 +94,6 @@ namespace libsharperang {
 		public string FoundPrinterGuidAddrs(Guid deviceId) => GetAddressesFromGuid(deviceId)
 																													.ConvertAll(a => a.ToString())
 																													.Aggregate((a, b) => a+","+b);
-		public string FoundProdIds() => printer?.Info.ProductString;
+		public string FoundProdIds() => pDevice?.Info.ProductString;
 	}
 }

@@ -12,9 +12,16 @@ namespace libsharperang {
 			USB,
 			Bluetooth
 		}
-		public string Model { get; internal set; }
+        public Printer printer;
+        public string Model { get; internal set; }
 		public string FirmwareVer { get; internal set; }
 		public int Battery { get; internal set; }
 		public ConnectionType ActiveConnectionType { get; internal set; } = ConnectionType.None;
+
+        internal bool InitialiseConnection() => false;
+        internal bool DestroyConnection() => false;
+
+        public Base() => InitialiseConnection();
+        ~Base() => DestroyConnection();
 	}
 }
