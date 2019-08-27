@@ -99,7 +99,7 @@ namespace libsharperang {
 		}
 		public byte[] BuildTransmitCrc() {
 			DataTransforms _=new DataTransforms();
-			_.InitialiseCrc(0x35769521, true);
+			_.InitialiseCrc(0x35769521);
 			return Build(Opcode.CrcTransmit, transformer.GetCrcKeyBytes(), _);
 		}
 	}

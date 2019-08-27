@@ -27,6 +27,9 @@ namespace sharperang {
 			logger.Debug("ClaimUSB => " + printer?.Claim());
 			//logger.Debug("IUsb::Initialised => " + printer?.pUsb?.Initialised());
 		}
-		private void BtTestLine_Click(object sender, RoutedEventArgs e) => logger.Debug("printer::TestCRC() => "+BitConverter.ToString(printer.builder.BuildTransmitCrc()).Replace('-',' '));
+		private void BtTestLine_Click(object sender, RoutedEventArgs e) {
+			logger.Debug("printer::TransmitCrc() => "+BitConverter.ToString(printer.builder.BuildTransmitCrc()).Replace('-', ' '));
+			logger.Debug("printer::TestCRC(0x0000) => "+BitConverter.ToString(printer.builder.Build(Frame.Opcode.SessionBegin, new byte[] { 0x00, 0x00 })).Replace('-',' '));
+		}
 	}
 }
