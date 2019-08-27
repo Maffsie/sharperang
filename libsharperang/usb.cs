@@ -62,6 +62,7 @@ using LibUsbDotNet.Main;
 namespace libsharperang {
 	public class Frame {
 		public DataTransforms transformer=new DataTransforms();
+
 		public enum Opcode {
 			SessionBegin = 10,
 			SessionEnd,
@@ -69,6 +70,8 @@ namespace libsharperang {
 			PrintContinue,
 			CrcTransmit = 30
 		}
+		private byte FrameStart	= 0x02;
+		private byte FrameEnd		= 0x03;
 		private byte[] ResolveOpcode(Opcode opcode) {
 			switch (opcode) {
 				case Opcode.SessionBegin:  return new byte[] { 0x06, 0x00, 0x02, 0x00 };
@@ -81,24 +84,24 @@ namespace libsharperang {
 		}
 		public byte[] Build(Opcode opcode, byte[] data) => Build(opcode, data, transformer);
 		public byte[] Build(Opcode opcode, byte[] data, DataTransforms transformer) {
-			if (!transformer.IsCrcInitialised()) transformer.InitialiseCrc();
 			byte[] result=new byte[data.Length+10];
-			result[0]=0x02;
-			result[result.Length-1]=0x03;
+			result[0]=FrameStart;
+			result[result.Length-1]=FrameEnd;
 			Buffer.BlockCopy(ResolveOpcode(opcode), 0, result, 1, 4);
 			Buffer.BlockCopy(data, 0, result, 5, data.Length);
-			Buffer.BlockCopy(transformer.CRC.ComputeHash(data), 0, result, result.Length-5, 4);
+			Buffer.BlockCopy(transformer.GetHashSum(data), 0, result, result.Length-5, 4);
 			return result;
 		}
 		public byte[] BuildTransmitCrc() {
+			if (!transformer.IsCrcInitialised()) transformer.InitialiseCrc(0x77c40d4d^0x35769521);
 			DataTransforms _=new DataTransforms();
-			_.InitialiseCrc(0x35769521);
+			_.InitialiseCrc();
 			return Build(Opcode.CrcTransmit, transformer.GetCrcKeyBytes(), _);
 		}
 	}
 	public class USBPrinter : Base, IPrinter {
-    	// TODO - work out if it's possible to get this working with the default usbprint.inf driver Windows uses on plugging in
-    	//  otherwise any user would have to first use Zadig to change the driver to WinUSB
+			// TODO - work out if it's possible to get this working with the default usbprint.inf driver Windows uses on plugging in
+			//  otherwise any user would have to first use Zadig to change the driver to WinUSB
 		private UsbDevice _uDv;
 		private UsbEndpointWriter _uWr;
 		private UsbEndpointReader _uRd;
