@@ -79,13 +79,6 @@ namespace libsharperang {
 				default: throw new NullReferenceException();
 			}
 		}
-		private byte[] SwapEndianness(uint value) {
-			uint b1 = (value >>  0) & 0xff;
-			uint b2 = (value >>  8) & 0xff;
-			uint b3 = (value >> 16) & 0xff;
-			uint b4 = (value >> 24) & 0xff;
-			return BitConverter.GetBytes((b1 << 24) | (b2 << 16) | (b3 << 8) | (b4 << 0));
-		}
 		public byte[] Build(Opcode opcode, byte[] data) => Build(opcode, data, transformer);
 		public byte[] Build(Opcode opcode, byte[] data, DataTransforms transformer) {
 			if (!transformer.IsCrcInitialised()) transformer.InitialiseCrc();
