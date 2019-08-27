@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Vadavo.NEscPos;
-using Vadavo.NEscPos.Printable;
+﻿using Crc;
 
 namespace libsharperang {
 	public abstract class Base {
@@ -12,16 +8,15 @@ namespace libsharperang {
 			USB,
 			Bluetooth
 		}
-        public Printer printer;
-        public string Model { get; internal set; }
+		internal DataTransforms transform=new DataTransforms();
+		//public Printer printer;
+		public string Model { get; internal set; }
 		public string FirmwareVer { get; internal set; }
 		public int Battery { get; internal set; }
 		public ConnectionType ActiveConnectionType { get; internal set; } = ConnectionType.None;
-
-        internal bool InitialiseConnection() => false;
-        internal bool DestroyConnection() => false;
-
-        public Base() => InitialiseConnection();
-        ~Base() => DestroyConnection();
+		internal bool InitialiseConnection() => false;
+		internal bool DestroyConnection() => false;
+		public Base() => InitialiseConnection();
+		~Base() => DestroyConnection();
 	}
 }

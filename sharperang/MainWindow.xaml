@@ -1,11 +1,11 @@
 ﻿<Window x:Class="sharperang.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:sharperang"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+				xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+				xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+				xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+				xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+				xmlns:local="clr-namespace:sharperang"
+				mc:Ignorable="d"
+				Title="MainWindow" Height="450" Width="800">
 	<Grid x:Name="gMain">
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="159*"/>
@@ -16,6 +16,7 @@
 			<Grid Margin="10,10,10,10">
 				<Button x:Name="btClearLog" Content="Clear Log" HorizontalAlignment="Left" Width="75" Margin="0,2,0,152.2" Click="BtClearLog_Click"/>
 				<Button x:Name="btInitUSB" Content="Initialise USB" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="0,23,0,0" IsDefault="True" Height="21" Click="BtInitUSB_Click"/>
+				<Button x:Name="btTestLine" Content="Print test" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="0,44,0,0" IsDefault="True" Height="21" Click="BtTestLine_Click"/>
 			</Grid>
 		</GroupBox>
 		<TextBox x:Name="tbLog" HorizontalAlignment="Left" Margin="10,232,0,10" TextWrapping="Wrap" Width="774" Grid.ColumnSpan="3" AllowDrop="False" IsReadOnly="True" IsUndoEnabled="False" VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True" Text="{Binding Path=LogBuffer}"/>
