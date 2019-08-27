@@ -71,17 +71,17 @@ namespace libsharperang {
 		}
 		private byte[] ResolveOpcode(Opcode opcode) {
 			switch (opcode) {
-				case Opcode.SessionBegin: return new byte[]		{ 0x06, 0x00, 0x02, 0x00 };
-				case Opcode.SessionEnd: return new byte[]			{ 0x1a, 0x00, 0x02, 0x00 };
-				case Opcode.PrintBegin: return new byte[]			{ 0x00, 0x01, 0xf0, 0x03 };
-				case Opcode.PrintContinue: return new byte[]	{ 0x00, 0x01, 0xf0, 0x02 };
-				case Opcode.CrcTransmit: return new byte[]		{ 0x18, 0x01, 0x04, 0x00 };
+				case Opcode.SessionBegin:  return new byte[] { 0x06, 0x00, 0x02, 0x00 };
+				case Opcode.SessionEnd:    return new byte[] { 0x1a, 0x00, 0x02, 0x00 };
+				case Opcode.PrintBegin:    return new byte[] { 0x00, 0x01, 0xf0, 0x03 };
+				case Opcode.PrintContinue: return new byte[] { 0x00, 0x01, 0xf0, 0x02 };
+				case Opcode.CrcTransmit:   return new byte[] { 0x18, 0x01, 0x04, 0x00 };
 				default: throw new NullReferenceException();
 			}
 		}
 		private byte[] SwapEndianness(uint value) {
-			uint b1 = (value >> 0) & 0xff;
-			uint b2 = (value >> 8) & 0xff;
+			uint b1 = (value >>  0) & 0xff;
+			uint b2 = (value >>  8) & 0xff;
 			uint b3 = (value >> 16) & 0xff;
 			uint b4 = (value >> 24) & 0xff;
 			return BitConverter.GetBytes((b1 << 24) | (b2 << 16) | (b3 << 8) | (b4 << 0));
@@ -104,6 +104,8 @@ namespace libsharperang {
 		}
 	}
 	public class USBPrinter : Base, IPrinter {
+    	// TODO - work out if it's possible to get this working with the default usbprint.inf driver Windows uses on plugging in
+    	//  otherwise any user would have to first use Zadig to change the driver to WinUSB
 		private UsbDevice _uDv;
 		private UsbEndpointWriter _uWr;
 		private UsbEndpointReader _uRd;
