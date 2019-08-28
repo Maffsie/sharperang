@@ -17,6 +17,7 @@ namespace libsharperang {
 		//public void InitialiseCrc(uint Key) => CRC=new CrcSum(Bludgeon(Key), Key);
 		public void InitialiseCrc(uint Key=0x35769521) {
 			if (hasher==null || (hasher.Initialised && hasher.Initial != Key)) hasher=new CRC32(Key);
+			Console.WriteLine("{0:X}", hasher.Initial);
 			hasher.Initialise();
 		}
 		public byte[] GetHashSum(byte[] data) {
@@ -27,7 +28,7 @@ namespace libsharperang {
 		public uint GetCrcKey() {
 			if (!IsCrcInitialised()) InitialiseCrc();
 			//return CRC.CrcKey;
-			return (hasher.Initial == MagicNumber? hasher.Initial : hasher.Initial ^ MagicNumber);
+			return hasher.Initial == MagicNumber? hasher.Initial : hasher.Initial ^ MagicNumber;
 		}
 		public byte[] GetCrcKeyBytes() {
 			if (!IsCrcInitialised()) InitialiseCrc();

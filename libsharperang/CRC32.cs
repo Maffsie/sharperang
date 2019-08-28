@@ -4,7 +4,8 @@ using System.Linq;
 
 namespace libsharperang {
 	public class CRC32 {
-		public uint Initial { get; private set; } = 0xFFFFFFFF;
+		private uint _Initial = 0xFFFFFFFF;
+		public uint Initial { get { return ~_Initial; } private set { _Initial=~value; } }
 		private uint Polynomial = 0xedb88320;
 		//private uint Polynomial = 0x04c11db7;
 		private uint[] Table;
@@ -34,7 +35,7 @@ namespace libsharperang {
 		public uint GetChecksum<T>(IEnumerable<T> bytes) {
 			if (!Initialised) Initialise();
 			try {
-				return ~bytes.Aggregate(Initial,
+				return ~bytes.Aggregate(_Initial,
 					(csR, cB) => Table[(csR & 0xFF) ^ Convert.ToByte(cB)] ^ (csR>>8));
 			} catch (FormatException e) {
 				throw new Exception("Could not read stream as bytes", e);

@@ -29,7 +29,12 @@ namespace sharperang {
 		}
 		private void BtTestLine_Click(object sender, RoutedEventArgs e) {
 			logger.Debug("printer::TransmitCrc() => "+BitConverter.ToString(printer.builder.BuildTransmitCrc()).Replace('-', ' '));
-			logger.Debug("printer::TestCRC(0x0000) => "+BitConverter.ToString(printer.builder.Build(Frame.Opcode.SessionBegin, new byte[] { 0x00, 0x00 })).Replace('-',' '));
+			logger.Debug("printer::TestCRC(SessionBegin, 0x0000) => "+BitConverter.ToString(printer.builder.Build(Frame.Opcode.SessionBegin, new byte[] { 0x00, 0x00 })).Replace('-',' '));
+			logger.Debug("Transmit CRC and session preamble to printer, if validation needed please follow in wireshark");
+			printer.TransmitCrcKey();
+			printer.EndSession();
+			printer.StartSession();
+			printer.EndSession();
 		}
 	}
 }

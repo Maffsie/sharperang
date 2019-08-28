@@ -186,6 +186,11 @@ namespace libsharperang {
 			_=p?.Close();
 			_uDv?.Close();
 		}
+		public void TransmitCrcKey() => WriteBytes(builder.BuildTransmitCrc());
+		public void StartSession() => StartSession(new byte[2] { 0, 0 });
+		public void StartSession(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.SessionBegin, data));
+		public void EndSession() => EndSession(new byte[2] { 0, 0 });
+		public void EndSession(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.SessionEnd, data));
 		public bool IsPrinterPresent() => (Devices != null && Devices.Count > 0);
 		bool IPrinter.Initialised() => Initialised();
 		byte[] IPrinter.ReadBytes() => ReadBytes();
