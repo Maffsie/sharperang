@@ -23,18 +23,17 @@ namespace sharperang {
 			logger.Debug("IsPrinterPresent => "+printer.IsPrinterPresent());
 			logger.Debug("FoundPrinterGuids => "+printer.FoundPrinterGuids());
 			printer?.IDs?.ForEach(p => logger.Debug("FoundPrinterGuidAddrs "+p.ToString()+" => "+printer?.FoundPrinterGuidAddrs(p)));
-			logger.Debug("OpenUSB => "+printer?.Open());
-			logger.Debug("ClaimUSB => " + printer?.Claim());
-			//logger.Debug("IUsb::Initialised => " + printer?.pUsb?.Initialised());
+			logger.Debug("Open => "+printer?.Open());
+			logger.Debug("Claim => " + printer?.Claim());
+			logger.Debug("Init => "+BitConverter.ToString(printer.builder.BuildTransmitCrc()).Replace('-', ' '));
+			printer.InitPrinter();
+			logger.Debug("Printer initialised and ready");
 		}
 		private void BtTestLine_Click(object sender, RoutedEventArgs e) {
-			logger.Debug("printer::TransmitCrc() => "+BitConverter.ToString(printer.builder.BuildTransmitCrc()).Replace('-', ' '));
-			logger.Debug("printer::TestCRC(SessionBegin, 0x0000) => "+BitConverter.ToString(printer.builder.Build(Frame.Opcode.SessionBegin, new byte[] { 0x00, 0x00 })).Replace('-',' '));
-			logger.Debug("Transmit CRC and session preamble to printer, if validation needed please follow in wireshark");
-			printer.TransmitCrcKey();
-			printer.EndSession();
-			printer.StartSession();
-			printer.EndSession();
+			byte[] data = new byte[384];
+			data[5] = 0x10; data[4]=0x10; data[3]=0x20; data[2]=0x20; data[1]=0x30; data[0]=0x30;
+			data[192] = 0x10; data[193]=0x10;data[194]=0x20;data[195]=0x20;data[196]=0x30;data[197]=0x30;
+			printer.PrintBytes(data);
 		}
 	}
 }

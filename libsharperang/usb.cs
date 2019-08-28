@@ -76,18 +76,18 @@ namespace libsharperang {
 			switch (opcode) {
 				case Opcode.SessionBegin:  return new byte[] { 0x06, 0x00, 0x02, 0x00 };
 				case Opcode.SessionEnd:    return new byte[] { 0x1a, 0x00, 0x02, 0x00 };
-				case Opcode.PrintBegin:    return new byte[] { 0x00, 0x01, 0xf0, 0x03 };
-				case Opcode.PrintContinue: return new byte[] { 0x00, 0x01, 0xf0, 0x02 };
 				case Opcode.CrcTransmit:   return new byte[] { 0x18, 0x01, 0x04, 0x00 };
 				default: throw new NullReferenceException();
 			}
 		}
-		public byte[] Build(Opcode opcode, byte[] data) => Build(opcode, data, transformer);
-		public byte[] Build(Opcode opcode, byte[] data, DataTransforms transformer) {
+		public byte[] Build(Opcode opcode, byte[] data) => Build(ResolveOpcode(opcode), data, transformer);
+		public byte[] Build(byte[] opcode, byte[] data) => Build(opcode, data, transformer);
+		public byte[] Build(Opcode opcode, byte[] data, DataTransforms transformer) => Build(ResolveOpcode(opcode), data, transformer);
+		public byte[] Build(byte[] opcode, byte[] data, DataTransforms transformer) {
 			byte[] result=new byte[data.Length+10];
 			result[0]=FrameStart;
 			result[result.Length-1]=FrameEnd;
-			Buffer.BlockCopy(ResolveOpcode(opcode), 0, result, 1, 4);
+			Buffer.BlockCopy(opcode, 0, result, 1, 4);
 			Buffer.BlockCopy(data, 0, result, 5, data.Length);
 			Buffer.BlockCopy(transformer.GetHashSum(data), 0, result, result.Length-5, 4);
 			return result;
@@ -191,6 +191,31 @@ namespace libsharperang {
 		public void StartSession(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.SessionBegin, data));
 		public void EndSession() => EndSession(new byte[2] { 0, 0 });
 		public void EndSession(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.SessionEnd, data));
+		public void InitPrinter() {
+			TransmitCrcKey();
+			EndSession();
+			PollPrinter();
+		}
+		public void PollPrinter() {
+			StartSession();
+			EndSession();
+		}
+		public void Feed() => EndSession(new byte[2] { 0x64, 0x00 });
+		public void Feed(int milliseconds) => EndSession(BitConverter.GetBytes(transform.SwapEndianness(
+			0x00000000 | (((((
+				(uint)milliseconds & 0xFFU) << 16) |
+				(uint)milliseconds) & 0xFFFF00U) >> 8))).Skip(2).ToArray());
+		public void PrintBytes(byte[] data, bool autofeed=true) {
+			List<byte[]> datas = data
+															.Select((b, i) => new {Index = i, Value = b })
+															.GroupBy(b => b.Index/1008)
+															.Select(b => b.Select(bb => bb.Value).ToArray())
+															.ToList();
+			datas.ForEach(b => WriteBytes(builder.Build(transform.GeneratePrintOpcode(b), b)));
+			if (autofeed) Feed(60);
+		}
+		public void PrintTestA(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.PrintBegin, data));
+		public void PrintTestB(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.PrintContinue, data));
 		public bool IsPrinterPresent() => (Devices != null && Devices.Count > 0);
 		bool IPrinter.Initialised() => Initialised();
 		byte[] IPrinter.ReadBytes() => ReadBytes();

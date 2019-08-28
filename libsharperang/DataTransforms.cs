@@ -34,6 +34,10 @@ namespace libsharperang {
 			if (!IsCrcInitialised()) InitialiseCrc();
 			return BitConverter.GetBytes(GetCrcKey());
 		}
+		public byte[] GeneratePrintOpcode(byte[] data) => BitConverter.GetBytes(SwapEndianness(
+			0x00010000 | (((((
+				(uint)data.Length & 0xFFU) << 16) |
+				(uint)data.Length) & 0xFFFF00U) >> 8)));
 		public uint SwapEndianness(uint value) => (
 			(value & 0x000000FFU) << 24) |
 			((value & 0x0000FF00U) << 8) |
