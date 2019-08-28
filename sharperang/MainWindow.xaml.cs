@@ -31,6 +31,9 @@ namespace sharperang {
 		}
 		private void BtTestLine_Click(object sender, RoutedEventArgs e) {
 			byte[] data = new byte[384];
+			//having spent some time examining this, each bit in a given byte corresponds to a dot on the thermal impression plate
+			//and each set of 192 bytes constitutes a single line
+			//giving a size of 3072 distinct dots per line
 			data[5] = 0x10; data[4]=0x10; data[3]=0x20; data[2]=0x20; data[1]=0x30; data[0]=0x30;
 			data[192] = 0x10; data[193]=0x10;data[194]=0x20;data[195]=0x20;data[196]=0x30;data[197]=0x30;
 			printer.PrintBytes(data);
