@@ -117,6 +117,7 @@ namespace libsharperang {
 
 		public USBPrinter() {
 			ActiveConnectionType=ConnectionType.USB;
+			ImageWidth=48;
 			Initialise();
 		}
 		~USBPrinter() {
@@ -151,9 +152,10 @@ namespace libsharperang {
 																													.Aggregate((a, b) => a+","+b);
 		public string FoundProdIds() => _uDv?.Info.ProductString;
 		public bool Open() {
-			if (UsbDevice.AllDevices.Count == 0 ||
-					!IsPrinterPresent()) return false;
-			return Open(IDs.FirstOrDefault());
+			return UsbDevice.AllDevices.Count == 0 ||
+					!IsPrinterPresent()
+				? false
+				: Open(IDs.FirstOrDefault());
 		}
 		public bool Open(Guid deviceId) => Open(deviceId,
 																									GetAddressesFromGuid(deviceId).FirstOrDefault());
@@ -172,7 +174,10 @@ namespace libsharperang {
 		public bool Claim() {
 			if (!IsPrinterPresent() ||
 					_uDv is null ||
-					!_uDv.IsOpen) return false;
+					!_uDv.IsOpen) {
+				return false;
+			}
+
 			IUsbDevice p = _uDv as IUsbDevice;
 			p?.SetConfiguration(1);
 			p?.ClaimInterface(0);
@@ -229,7 +234,7 @@ namespace libsharperang {
 		}
 		public bool WriteBytes(byte[] Frame) {
 			if (_uWr==null) _uWr=_uDv?.OpenEndpointWriter(WriteEndpointID.Ep02);
-			return (_uWr.Write(Frame, 100, out int _) == ErrorCode.None);
+			return (_uWr.Write(Frame, 1000, out int _) == ErrorCode.None);
 		}
 	}
 }

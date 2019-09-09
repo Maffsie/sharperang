@@ -5,7 +5,7 @@ using System.Linq;
 namespace libsharperang {
 	public class CRC32 {
 		private uint _Initial = 0xFFFFFFFF;
-		public uint Initial { get { return ~_Initial; } private set { _Initial=~value; } }
+		public uint Initial { get => ~_Initial; private set => _Initial=~value; }
 		private uint Polynomial = 0xedb88320;
 		//private uint Polynomial = 0x04c11db7;
 		private uint[] Table;

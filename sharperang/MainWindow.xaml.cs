@@ -1,13 +1,11 @@
 ﻿using libsharperang;
 using System;
 using System.Windows;
-
+using System.Windows.Forms;
 //testing
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Windows.Media.Imaging;
-using System.Runtime.InteropServices;
 
 namespace sharperang {
 	/// <summary>
@@ -17,49 +15,6 @@ namespace sharperang {
 		private LogBridge logger;
 		private USBPrinter printer=new USBPrinter();
 		private Bitmap bimg;
-
-		public static Bitmap ConvertTo1Bit(Bitmap input) {
-			byte[] masks = new byte[] { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
-			Bitmap output = new Bitmap(input.Width, input.Height, PixelFormat.Format1bppIndexed);
-			sbyte[,] data = new sbyte[input.Width, input.Height];
-			BitmapData inputData = input.LockBits(new Rectangle(0, 0, input.Width, input.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
-			try {
-				IntPtr scanLine = inputData.Scan0;
-				byte[] line = new byte[inputData.Stride];
-				for (int y = 0; y < inputData.Height; y++, scanLine += inputData.Stride) {
-					Marshal.Copy(scanLine, line, 0, line.Length);
-					for (int x = 0; x < input.Width; x++) {
-						data[x, y] = (sbyte)(64 * (GetGreyLevel(line[(x * 3) + 2], line[(x * 3) + 1], line[(x * 3) + 0]) - 0.5));
-					}
-				}
-			} finally {
-				input.UnlockBits(inputData);
-			}
-			BitmapData outputData = output.LockBits(new Rectangle(0, 0, output.Width, output.Height), ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
-			try {
-				IntPtr scanLine = outputData.Scan0;
-				for (int y = 0; y < outputData.Height; y++, scanLine += outputData.Stride) {
-					byte[] line = new byte[outputData.Stride];
-					for (int x = 0; x < input.Width; x++) {
-						bool j = data[x, y] > 0;
-						if (j) line[x / 8] |= masks[x % 8];
-						sbyte error = (sbyte)(data[x, y] - (j ? 32 : -32));
-						if (x < input.Width - 1) data[x + 1, y] += (sbyte)(7 * error / 16);
-						if (y < input.Height - 1) {
-							if (x > 0) data[x - 1, y + 1] += (sbyte)(3 * error / 16);
-							data[x, y + 1] += (sbyte)(5 * error / 16);
-							if (x < input.Width - 1) data[x + 1, y + 1] += (sbyte)(1 * error / 16);
-						}
-					}
-					Marshal.Copy(line, 0, scanLine, outputData.Stride);
-				}
-			} finally {
-				output.UnlockBits(outputData);
-			}
-			return output;
-		}
-
-		public static double GetGreyLevel(byte r, byte g, byte b) => ((r * 0.299) + (g * 0.587) + (b * 0.114)) / 255;
 
 		public MainWindow() {
 			InitializeComponent();
@@ -81,43 +36,104 @@ namespace sharperang {
 			printer.InitPrinter();
 			logger.Debug("Printer initialised and ready");
 		}
-		private void BtTestLine_Click(object sender, RoutedEventArgs e) {
-			byte[] data = new byte[72];
-			byte[] data2 = new byte[95];
-			//for each byte (0000 0000) every 4 bits is a "dot" with variable width.
-			//having spent some time examining this, each bit in a given byte corresponds to a dot on the thermal impression plate
-			// every 96 bytes is one line, and the first 48 bytes of each line is the actual dot data. it's unclear to me what the other half is for. P2 support maybe?
-			//giving a size of 768 distinct dots per line
-			//line length of P1 is 48 bytes
-			//line length of P2 is 72 bytes
-			//unsure why each line is stored in a buffer of 96 bytes, but okay.
-			//Paperang P1 prints bytes on one line from byte 0 to byte 47
-			//Paperang P2 prints bytes on one line from byte 0 to byte 71
-			data[0] = 0x55; data[8] = 0x77; data[16] = 0x77; data[24] = 0x77; data[32] = 0x77; data[40] = 0x77;
-
-			data[48] = 0x77; data[56] = 0x77; data[64] = 0x77; data[71] = 0x77; //data[72] = 0x77; data[80] = 0x77; data[88] = 0x77;
-			//data[5] = 0x10; data[4]=0x10; data[3]=0x20; data[2]=0x20; data[1]=0x30; data[0]=0x30;
-			/*data2[0] = 0x10; data2[1]=0x10;data2[2]=0x20;data2[3]=0x20;data2[4]=0x30;data2[5]=0x30;
-			data2[32] = 0xaa; data[32] = 0x55;
-			data2[50] = 0x55; data[50] = 0xaa;
-			data2[87] = 0xaa; data[87] = 0x55;*/
-			printer.PrintBytes(data, false);
-			printer.PrintBytes(data2, false);
-		}
-
+		private void BtTestLine_Click(object sender, RoutedEventArgs e) => printer.Feed(200);
 		private void BtLoadImage_Click(object sender, RoutedEventArgs e) {
-			bimg=new Bitmap("C:/Users/maff/Downloads/Sqrl - Kid Maff (Vectorised).png");
-			bimg=new Bitmap(bimg, 384, 543);
-			Bitmap fimg=new Bitmap(768, 543);
+			OpenFileDialog r = new OpenFileDialog {
+				Title="Select 1 (one) image file",
+				Multiselect=false,
+				Filter="PNG files (*.png)|*.png|JPEG files (*.jpe?g)|*.jpg *.jpeg|Jraphics Interchange Format files (*.gif)|*.gif|Bitte-Mappe files (*.bmp)|*.bmp|All of the above|*.jpg *.jpeg *.png *.gif *.bmp",
+				AutoUpgradeEnabled=true
+			};
+			r.ShowDialog();
+			Image _=Image.FromFile(r.FileName);
+			r.Dispose();
+			bimg=new Bitmap(_,
+											(printer.ImageWidth*8), (int)((double)(printer.ImageWidth*8)*(double)((double)_.Height/(double)_.Width)));
+			_.Dispose();
+			bimg=CopyToBpp(bimg);
+			//BitArray img = new BitArray(bimg.Height*96*8);
+			byte[] iimg = new byte[bimg.Height*printer.ImageWidth];
+			byte[] img;
+			using (MemoryStream s = new MemoryStream()) {
+				bimg.Save(s, ImageFormat.Bmp);
+				img=s.ToArray();
+			}
+			int startoffset=img.Length-((bimg.Width/8)+(bimg.Height*48));
 			for(int h=0;h<bimg.Height;h++) {
-				for(int w=0;w<384;w++) {
-					fimg.SetPixel(w, h, bimg.GetPixel(w, h));
+				for (int w=0;w<printer.ImageWidth;w++) {
+					iimg[(printer.ImageWidth*(bimg.Height-1-h))+(printer.ImageWidth-1-w)]=(byte)~
+						(img[startoffset+(printer.ImageWidth*h)+(printer.ImageWidth-1-w)]);
 				}
 			}
-			Bitmap tmp = ConvertTo1Bit(fimg);
-			byte[] img;
-			
-			printer.PrintBytes(img, false);
+			printer.PrintBytes(iimg, false);
+			printer.Feed(200);
 		}
+		static uint BitSwap1(uint x) => ((x & 0x55555555u) << 1) | ((x & (~0x55555555u)) >> 1);
+		static uint BitSwap2(uint x) => ((x & 0x33333333u) << 2) | ((x & (~0x33333333u)) >> 2);
+		static uint BitSwap4(uint x) => ((x & 0x0f0f0f0fu) << 4) | ((x & (~0x0f0f0f0fu)) >> 4);
+		static uint BitSwap(uint x) => BitSwap4(BitSwap2(BitSwap1(x)));
+		static Bitmap CopyToBpp(Bitmap b) {
+			int w=b.Width, h=b.Height;
+			IntPtr hbm = b.GetHbitmap();
+			BITMAPINFO bmi = new BITMAPINFO {
+				biSize=40,
+				biWidth=w,
+				biHeight=h,
+				biPlanes=1,
+				biBitCount=1,
+				biCompression=BI_RGB,
+				biSizeImage = (uint)(((w+7)&0xFFFFFFF8)*h/8),
+				biXPelsPerMeter=1000000,
+				biYPelsPerMeter=1000000
+			};
+			bmi.biClrUsed=2;
+			bmi.biClrImportant=2;
+			bmi.cols=new uint[256];
+			bmi.cols[0]=MAKERGB(0, 0, 0);
+			bmi.cols[1]=MAKERGB(255, 255, 255);
+			IntPtr hbm0 = CreateDIBSection(IntPtr.Zero,ref bmi,DIB_RGB_COLORS,out IntPtr _,IntPtr.Zero,0);
+			IntPtr sdc = GetDC(IntPtr.Zero);
+			IntPtr hdc = CreateCompatibleDC(sdc); SelectObject(hdc, hbm);
+			IntPtr hdc0 = CreateCompatibleDC(sdc); SelectObject(hdc0, hbm0);
+			BitBlt(hdc0, 0, 0, w, h, hdc, 0, 0, SRCCOPY);
+			Bitmap b0 = Image.FromHbitmap(hbm0);
+			DeleteDC(hdc);
+			DeleteDC(hdc0);
+			ReleaseDC(IntPtr.Zero, sdc);
+			DeleteObject(hbm);
+			DeleteObject(hbm0);
+			return b0;
+		}
+		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+		public static extern bool DeleteObject(IntPtr hObject);
+		[System.Runtime.InteropServices.DllImport("user32.dll")]
+		public static extern IntPtr GetDC(IntPtr hwnd);
+		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+		public static extern IntPtr CreateCompatibleDC(IntPtr hdc);
+		[System.Runtime.InteropServices.DllImport("user32.dll")]
+		public static extern int ReleaseDC(IntPtr hwnd, IntPtr hdc);
+		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+		public static extern int DeleteDC(IntPtr hdc);
+		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+		public static extern IntPtr SelectObject(IntPtr hdc, IntPtr hgdiobj);
+		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+		public static extern int BitBlt(IntPtr hdcDst, int xDst, int yDst, int w, int h, IntPtr hdcSrc, int xSrc, int ySrc, int rop);
+		static int SRCCOPY = 0x00CC0020;
+		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+		static extern IntPtr CreateDIBSection(IntPtr hdc, ref BITMAPINFO bmi, uint Usage, out IntPtr bits, IntPtr hSection, uint dwOffset);
+		static uint BI_RGB = 0;
+		static uint DIB_RGB_COLORS=0;
+		[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+		public struct BITMAPINFO {
+			public uint biSize;
+			public int biWidth, biHeight;
+			public short biPlanes, biBitCount;
+			public uint biCompression, biSizeImage;
+			public int biXPelsPerMeter, biYPelsPerMeter;
+			public uint biClrUsed, biClrImportant;
+			[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValArray, SizeConst=256)]
+			public uint[] cols;
+		}
+		static uint MAKERGB(int r, int g, int b) => ((uint)(b&255)) | ((uint)((r&255)<<8)) | ((uint)((g&255)<<16));
 	}
 }

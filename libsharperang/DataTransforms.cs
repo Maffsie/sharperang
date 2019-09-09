@@ -15,7 +15,7 @@ namespace libsharperang {
 		public bool IsCrcInitialised() => (hasher!=null && hasher.Initialised);
 		//public void InitialiseCrc() => CRC=new CrcSum(Bludgeon(0x77c40d4d^0x35769521), 0x77c40d4d);
 		//public void InitialiseCrc(uint Key) => CRC=new CrcSum(Bludgeon(Key), Key);
-		public void InitialiseCrc(uint Key=0x35769521) {
+		public void InitialiseCrc(uint Key = 0x35769521) {
 			if (hasher==null || (hasher.Initialised && hasher.Initial != Key)) hasher=new CRC32(Key);
 			Console.WriteLine("{0:X}", hasher.Initial);
 			hasher.Initialise();
@@ -28,7 +28,7 @@ namespace libsharperang {
 		public uint GetCrcKey() {
 			if (!IsCrcInitialised()) InitialiseCrc();
 			//return CRC.CrcKey;
-			return hasher.Initial == MagicNumber? hasher.Initial : hasher.Initial ^ MagicNumber;
+			return hasher.Initial == MagicNumber ? hasher.Initial : hasher.Initial ^ MagicNumber;
 		}
 		public byte[] GetCrcKeyBytes() {
 			if (!IsCrcInitialised()) InitialiseCrc();
