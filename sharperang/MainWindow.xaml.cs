@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Media.Imaging;
+using System.Runtime.InteropServices;
 
 namespace sharperang {
 	/// <summary>
@@ -16,6 +17,50 @@ namespace sharperang {
 		private LogBridge logger;
 		private USBPrinter printer=new USBPrinter();
 		private Bitmap bimg;
+
+		public static Bitmap ConvertTo1Bit(Bitmap input) {
+			byte[] masks = new byte[] { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+			Bitmap output = new Bitmap(input.Width, input.Height, PixelFormat.Format1bppIndexed);
+			sbyte[,] data = new sbyte[input.Width, input.Height];
+			BitmapData inputData = input.LockBits(new Rectangle(0, 0, input.Width, input.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+			try {
+				IntPtr scanLine = inputData.Scan0;
+				byte[] line = new byte[inputData.Stride];
+				for (int y = 0; y < inputData.Height; y++, scanLine += inputData.Stride) {
+					Marshal.Copy(scanLine, line, 0, line.Length);
+					for (int x = 0; x < input.Width; x++) {
+						data[x, y] = (sbyte)(64 * (GetGreyLevel(line[(x * 3) + 2], line[(x * 3) + 1], line[(x * 3) + 0]) - 0.5));
+					}
+				}
+			} finally {
+				input.UnlockBits(inputData);
+			}
+			BitmapData outputData = output.LockBits(new Rectangle(0, 0, output.Width, output.Height), ImageLockMode.WriteOnly, PixelFormat.Format1bppIndexed);
+			try {
+				IntPtr scanLine = outputData.Scan0;
+				for (int y = 0; y < outputData.Height; y++, scanLine += outputData.Stride) {
+					byte[] line = new byte[outputData.Stride];
+					for (int x = 0; x < input.Width; x++) {
+						bool j = data[x, y] > 0;
+						if (j) line[x / 8] |= masks[x % 8];
+						sbyte error = (sbyte)(data[x, y] - (j ? 32 : -32));
+						if (x < input.Width - 1) data[x + 1, y] += (sbyte)(7 * error / 16);
+						if (y < input.Height - 1) {
+							if (x > 0) data[x - 1, y + 1] += (sbyte)(3 * error / 16);
+							data[x, y + 1] += (sbyte)(5 * error / 16);
+							if (x < input.Width - 1) data[x + 1, y + 1] += (sbyte)(1 * error / 16);
+						}
+					}
+					Marshal.Copy(line, 0, scanLine, outputData.Stride);
+				}
+			} finally {
+				output.UnlockBits(outputData);
+			}
+			return output;
+		}
+
+		public static double GetGreyLevel(byte r, byte g, byte b) => ((r * 0.299) + (g * 0.587) + (b * 0.114)) / 255;
+
 		public MainWindow() {
 			InitializeComponent();
 			logger = new LogBridge();
@@ -62,30 +107,16 @@ namespace sharperang {
 
 		private void BtLoadImage_Click(object sender, RoutedEventArgs e) {
 			bimg=new Bitmap("C:/Users/maff/Downloads/Sqrl - Kid Maff (Vectorised).png");
-			int w=bimg.Width; int h=bimg.Height;float rt=(float)w/h;
-			h=(int)(384*rt);
-			bimg=new Bitmap(bimg, 384, h);
-			Bitmap tmp = new Bitmap(bimg.Width, bimg.Height, PixelFormat.Format1bppIndexed);
-			int width = bimg.Width;
-			int height = bimg.Height;
-			Color p;
-			for (int y = 0; y < height; y++) {
-				for (int x = 0; x < width; x++) {
-					p = bimg.GetPixel(x, y);
-					int a = p.A;
-					int r = p.R;
-					int g = p.G;
-					int b = p.B;
-					int avg = (int)(0.2989*r + 0.5870*g + 0.1140*b)/3;
-					avg = avg < 128 ? 0 : 255;
-					bimg.SetPixel(x, y, Color.FromArgb(a, avg, avg, avg));
+			bimg=new Bitmap(bimg, 384, 543);
+			Bitmap fimg=new Bitmap(768, 543);
+			for(int h=0;h<bimg.Height;h++) {
+				for(int w=0;w<384;w++) {
+					fimg.SetPixel(w, h, bimg.GetPixel(w, h));
 				}
 			}
+			Bitmap tmp = ConvertTo1Bit(fimg);
 			byte[] img;
-			using (MemoryStream s = new MemoryStream()) {
-				tmp.Save(s, System.Drawing.Imaging.ImageFormat.Bmp);
-				img=s.ToArray();
-			}
+			
 			printer.PrintBytes(img, false);
 		}
 	}
