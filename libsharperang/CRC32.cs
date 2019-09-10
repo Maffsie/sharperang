@@ -7,7 +7,6 @@ namespace libsharperang {
 		private uint _Initial = 0xFFFFFFFF;
 		public uint Initial { get => ~_Initial; private set => _Initial=~value; }
 		private uint Polynomial = 0xedb88320;
-		//private uint Polynomial = 0x04c11db7;
 		private uint[] Table;
 		public bool Initialised=false;
 		public CRC32(uint Initial) => this.Initial=Initial;
