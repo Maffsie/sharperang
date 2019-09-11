@@ -8,7 +8,6 @@ namespace libsharperang {
 			Bluetooth
 		}
 		internal DataTransforms transform=new DataTransforms();
-		//public Printer printer;
 		public string Model { get; internal set; }
 		public string FirmwareVer { get; internal set; }
 		public int Battery { get; internal set; }
