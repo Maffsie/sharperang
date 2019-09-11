@@ -26,6 +26,7 @@ namespace sharperang {
 			logger.ClearBuffer();
 		private void BtInitUSB_Click(object sender, RoutedEventArgs e) {
 			logger.Info("USB Initialising");
+            printer.Initialise();
 			//printer = new LibSharperang(logger);
 			logger.Debug("IsPrinterPresent => "+printer.IsPrinterPresent());
 			logger.Debug("FoundPrinterGuids => "+printer.FoundPrinterGuids());
@@ -36,21 +37,30 @@ namespace sharperang {
 			printer.InitPrinter();
 			logger.Debug("Printer initialised and ready");
 		}
-		private void BtTestLine_Click(object sender, RoutedEventArgs e) => printer.Feed(200);
+        private void BtTestLine_Click(object sender, RoutedEventArgs e) => printer.Feed(200);
 		private void BtLoadImage_Click(object sender, RoutedEventArgs e) {
+            logger.Debug("Loading image for print");
 			OpenFileDialog r = new OpenFileDialog {
 				Title="Select 1 (one) image file",
 				Multiselect=false,
 				Filter="PNG files (*.png)|*.png|JPEG files (*.jpe?g)|*.jpg *.jpeg|Jraphics Interchange Format files (*.gif)|*.gif|Bitte-Mappe files (*.bmp)|*.bmp|All of the above|*.jpg *.jpeg *.png *.gif *.bmp",
 				AutoUpgradeEnabled=true
 			};
-			r.ShowDialog();
+            if (r.ShowDialog() == System.Windows.Forms.DialogResult.Cancel) {
+                logger.Debug("Image load cancelled");
+                return;
+            }
 			Image _=Image.FromFile(r.FileName);
-			r.Dispose();
+            logger.Debug("Loaded image " + r.FileName);
+            r.Dispose();
+            logger.Debug("Disposed of dialog");
 			bimg=new Bitmap(_,
 											(printer.ImageWidth*8), (int)((double)(printer.ImageWidth*8)*(double)((double)_.Height/(double)_.Width)));
-			_.Dispose();
+            logger.Debug("Loaded image as Bitmap");
+            _.Dispose();
+            logger.Debug("Disposed of Image");
 			bimg=CopyToBpp(bimg);
+            logger.Debug("Converted Bitmap to Bitmap with 1-bit colour depth");
 			//BitArray img = new BitArray(bimg.Height*96*8);
 			byte[] iimg = new byte[bimg.Height*printer.ImageWidth];
 			byte[] img;
@@ -58,14 +68,20 @@ namespace sharperang {
 				bimg.Save(s, ImageFormat.Bmp);
 				img=s.ToArray();
 			}
-			int startoffset=img.Length-((bimg.Width/8)+(bimg.Height*48));
+            logger.Debug("Got bitmap's bytes");
+			int startoffset=img.Length-((bimg.Width/8)+(bimg.Height*printer.ImageWidth));
+            logger.Debug("Processing bytes with offset " + startoffset);
 			for(int h=0;h<bimg.Height;h++) {
 				for (int w=0;w<printer.ImageWidth;w++) {
 					iimg[(printer.ImageWidth*(bimg.Height-1-h))+(printer.ImageWidth-1-w)]=(byte)~
 						(img[startoffset+(printer.ImageWidth*h)+(printer.ImageWidth-1-w)]);
 				}
-			}
+            }
+            logger.Debug("Have print data of length " + iimg.Length);
+            bimg.Dispose();
+            logger.Debug("Disposed of Bitmap");
 			printer.PrintBytes(iimg, false);
+            logger.Debug("Feeding for 200ms");
 			printer.Feed(200);
 		}
 		static uint BitSwap1(uint x) => ((x & 0x55555555u) << 1) | ((x & (~0x55555555u)) >> 1);

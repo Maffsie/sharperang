@@ -1,5 +1,4 @@
 ﻿using System;
-using Crc;
 
 namespace libsharperang {
 	public class DataTransforms {

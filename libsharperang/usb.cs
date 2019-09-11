@@ -21,7 +21,7 @@ namespace libsharperang {
 
 		public enum Opcode {
 			SessionBegin = 10,
-			SessionEnd,
+			Feed,
 			PrintBegin = 20,
 			PrintContinue,
 			CrcTransmit = 30
@@ -31,6 +31,7 @@ namespace libsharperang {
 		private byte[] ResolveOpcode(Opcode opcode) {
 			switch (opcode) {
 				case Opcode.SessionBegin:  return new byte[] { 0x06, 0x00, 0x02, 0x00 };
+                case Opcode.Feed:          return new byte[] { 0x1a, 0x00, 0x02, 0x00 };
 				case Opcode.CrcTransmit:   return new byte[] { 0x18, 0x01, 0x04, 0x00 };
 				default: throw new NullReferenceException();
 			}
@@ -73,7 +74,6 @@ namespace libsharperang {
 		public USBPrinter() {
 			ActiveConnectionType=ConnectionType.USB;
 			ImageWidth=48;
-			Initialise();
 		}
 		~USBPrinter() {
 			Close();
@@ -149,22 +149,22 @@ namespace libsharperang {
 		public void TransmitCrcKey() => WriteBytes(builder.BuildTransmitCrc());
 		public void StartSession() => StartSession(new byte[2] { 0, 0 });
 		public void StartSession(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.SessionBegin, data));
-		public void EndSession() => EndSession(new byte[2] { 0, 0 });
-		public void EndSession(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.SessionEnd, data));
 		public void InitPrinter() {
 			TransmitCrcKey();
-			EndSession();
+			NoOp(); 
 			PollPrinter();
 		}
 		public void PollPrinter() {
 			StartSession();
-			EndSession();
+            NoOp();
 		}
-		public void Feed() => EndSession(new byte[2] { 0x64, 0x00 });
-		public void Feed(int milliseconds) => EndSession(BitConverter.GetBytes(transform.SwapEndianness(
+        public void Feed() => Feed(100);
+        //Feed 0 is equivalent to a no-op, though on the P2 model it appears to engage the roller even though it doesn't ultimately result in any rotation
+        public void NoOp() => Feed(0);
+        public void Feed(int milliseconds) => WriteBytes(builder.Build(Frame.Opcode.Feed, BitConverter.GetBytes(transform.SwapEndianness(
 			0x00000000 | (((((
 				(uint)milliseconds & 0xFFU) << 16) |
-				(uint)milliseconds) & 0xFFFF00U) >> 8))).Skip(2).ToArray());
+				(uint)milliseconds) & 0xFFFF00U) >> 8))).Skip(2).ToArray()));
 		public void PrintBytes(byte[] data, bool autofeed=true) {
 			List<byte[]> datas = data
 															.Select((b, i) => new {Index = i, Value = b })
@@ -174,8 +174,6 @@ namespace libsharperang {
 			datas.ForEach(b => WriteBytes(builder.Build(transform.GeneratePrintOpcode(b), b)));
 			if (autofeed) Feed(60);
 		}
-		public void PrintTestA(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.PrintBegin, data));
-		public void PrintTestB(byte[] data) => WriteBytes(builder.Build(Frame.Opcode.PrintContinue, data));
 		public bool IsPrinterPresent() => (Devices != null && Devices.Count > 0);
 		bool IPrinter.Initialised() => Initialised();
 		byte[] IPrinter.ReadBytes() => ReadBytes();

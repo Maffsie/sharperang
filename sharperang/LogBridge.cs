@@ -12,7 +12,7 @@ namespace sharperang {
 			set {
 				if (value == _LogBuffer) return;
 				if (value == "!clearlog") _LogBuffer = "";
-				else _LogBuffer += value + "\n";
+				else _LogBuffer = value + "\n" + _LogBuffer;
 				OnPropertyChanged("LogBuffer");
 			}
 		}

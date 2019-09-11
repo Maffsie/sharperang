@@ -1,5 +1,4 @@
-﻿using Crc;
-
+﻿
 namespace libsharperang {
 	public abstract class Base {
 		public enum ConnectionType {
