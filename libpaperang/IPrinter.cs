@@ -1,4 +1,5 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
 
 namespace libpaperang {
 	public abstract class BaseTypes {
@@ -41,20 +42,29 @@ namespace libpaperang {
 			public byte[] Print;
 			public byte[] TransmitCrc;
 		}
+		public struct Printer {
+			public Connection CommsMethod;
+			public Model Variant;
+			public Guid Id;
+			public string Address;
+			public dynamic Instance;
+		}
 	}
 	interface IPrinter {
 		short LineWidth { get; }
 		BaseTypes.Connection ConnectionMethod { get; }
 		BaseTypes.Model PrinterVariant { get; }
 		BaseTypes.State Status { get; }
-		bool IsPrinterAvailable();
-		bool IsPrinterInitialised();
-		bool Initialise();
-		bool OpenPrinter();
-		bool ClosePrinter();
-		bool Deinitialise();
-		bool WriteBytes(byte[] packet);
-		bool WriteBytes(byte[] packet, int delay);
+		bool PrinterAvailable { get; }
+		bool PrinterInitialised { get; }
+		bool PrinterOpen { get; }
+		List<BaseTypes.Printer> AvailablePrinters { get; }
+		void Initialise();
+		void OpenPrinter(BaseTypes.Printer printer);
+		void ClosePrinter();
+		void Deinitialise();
+		void WriteBytes(byte[] packet);
+		void WriteBytes(byte[] packet, int delay);
 		bool[] ReadBytes();
 	}
 }

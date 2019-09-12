@@ -31,7 +31,7 @@ namespace libpaperang.Helpers {
 			return ~ivr;
 		}
 		public uint GetChecksumUint<T>(IEnumerable<T> data) {
-			if (!IsInitialised) throw new InvalidOperationException("CRC object has not been Initialise()'d first. Please do that.");
+			if (!IsInitialised) throw new CrcNotAvailableException();
 			try {
 				return ~data.Aggregate(iv,
 					(cti, cb) => crctable[(cti&0xFF)^Convert.ToByte(cb)]^(cti>>8));
