@@ -36,10 +36,10 @@ namespace libpaperang {
 			Print
 		}
 		public struct Opcodes {
-			byte[] NoOp;
-			byte[] LineFeed;
-			byte[] Print;
-			byte[] TransmitCrc;
+			public byte[] NoOp;
+			public byte[] LineFeed;
+			public byte[] Print;
+			public byte[] TransmitCrc;
 		}
 	}
 	interface IPrinter {

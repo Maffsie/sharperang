@@ -9,7 +9,7 @@ namespace libpaperang.Helpers {
 		private uint poly = 0xedb88320;
 		private uint[] crctable;
 		public bool IsInitialised=false;
-		public CRC() { this.iv=0; }
+		public CRC() { iv=0; }
 		public CRC(uint iv) => this.iv=iv;
 		public void Initialise() {
 			crctable=Enumerable.Range(0, 256).Select(i => {

@@ -7,6 +7,15 @@ namespace libpaperang.Helpers {
 			Frame=FrameConstruction;
 			Op=Operations;
 		}
-		
+        public byte[] Oper(BaseTypes.Operations Operation) {
+            switch (Operation) {
+                case BaseTypes.Operations.NoOp: return Op.NoOp;
+                case BaseTypes.Operations.LineFeed: return Op.LineFeed;
+                case BaseTypes.Operations.CrcTransmit: return Op.TransmitCrc;
+                case BaseTypes.Operations.Print: return Op.Print;
+                default: throw new InvalidOperationException();
+            }
+        }
+
 	}
 }
