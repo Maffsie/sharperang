@@ -33,40 +33,37 @@ namespace libpaperang.Interfaces {
 			}
 		}
 
-		public BaseTypes.Connection ConnectionMethod { get => BaseTypes.Connection.USB; }
-		public BaseTypes.Model PrinterVariant { get => iModel; }
-
-		public BaseTypes.State Status { get => BaseTypes.State.Offline; }
+		public BaseTypes.Connection ConnectionMethod => BaseTypes.Connection.USB;
+		public BaseTypes.Model PrinterVariant => iModel;
+		public BaseTypes.State Status => BaseTypes.State.Offline;
 		public List<BaseTypes.Printer> AvailablePrinters {
 			get {
 				List<BaseTypes.Printer> _=new List<BaseTypes.Printer>();
 				(from d in UsbDevice.AllDevices
 				 where d.Vid == iV &&
 					 d.Pid == iP
-				 select d).ToList().ForEach(d => {
-					 _.Add(new BaseTypes.Printer {
-						 Id=d.DeviceInterfaceGuids.First(),
-						 CommsMethod=BaseTypes.Connection.USB,
-						 Address=d.DeviceProperties["Address"].ToString(),
-						 Instance=d
-					 });
-				 });
+				 select d).ToList().ForEach(d => _.Add(new BaseTypes.Printer {
+					 Id = d.DeviceInterfaceGuids.First(),
+					 CommsMethod = BaseTypes.Connection.USB,
+					 Address = d.DeviceProperties["Address"].ToString(),
+					 Instance = d
+				 }));
 				return _;
 			}
 		}
 
-		public bool PrinterAvailable { get => AvailablePrinters.Count > 0; }
+		public bool PrinterAvailable => AvailablePrinters.Count > 0;
 
-		public bool PrinterInitialised { get => false; }
+		public bool PrinterInitialised => false;
 
-		public bool PrinterOpen { get => false; }
+		public bool PrinterOpen => false;
 
 		public void ClosePrinter() {
 			Printer.rx?.Dispose();
 			Printer.tx?.Dispose();
-			Printer.iface?.ReleaseInterface(0);
-			Printer.iface?.Close();
-			Printer.handle?.Close();
+			_=Printer.iface?.ReleaseInterface(0);
+			_=Printer.iface?.Close();
+			_=Printer.handle?.Close();
 		}
 		public void Deinitialise() => throw new NotImplementedException();
 		public void Initialise() {
