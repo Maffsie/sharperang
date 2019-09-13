@@ -10,8 +10,8 @@ namespace libpaperang {
 			Bluetooth
 		}
 		public struct Packet {
-			byte Start;
-			byte End;
+			public byte Start;
+			public byte End;
 		}
 		public enum Model {
 			P1,
@@ -63,8 +63,8 @@ namespace libpaperang {
 		void OpenPrinter(BaseTypes.Printer printer);
 		void ClosePrinter();
 		void Deinitialise();
-		void WriteBytes(byte[] packet);
-		void WriteBytes(byte[] packet, int delay);
-		bool[] ReadBytes();
+		bool WriteBytes(byte[] packet);
+		bool WriteBytes(byte[] packet, int delay);
+		byte[] ReadBytes();
 	}
 }
