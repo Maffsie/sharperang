@@ -10,7 +10,7 @@ using System.IO;
 namespace sharperang {
 	public partial class MainWindow : Window {
 		private LogBridge logger;
-		private USBPrinter printer=new USBPrinter();
+		private USBPrinter printer=new USBPrinter(48);
 		private Bitmap bimg;
 
 		public MainWindow() {

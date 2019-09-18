@@ -73,8 +73,12 @@ namespace libsharperang {
 		public List<UsbRegistry> Devices;
 
 		public USBPrinter() {
-			ActiveConnectionType=ConnectionType.USB;
-			ImageWidth=72;
+			ActiveConnectionType = ConnectionType.USB;
+			ImageWidth = 72;
+		}
+		public USBPrinter(int w) {
+			ActiveConnectionType = ConnectionType.USB;
+			ImageWidth = w;
 		}
 		~USBPrinter() {
 			Close();
