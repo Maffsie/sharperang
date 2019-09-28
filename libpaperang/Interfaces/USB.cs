@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using LibUsbDotNet;
 using LibUsbDotNet.Main;
 
@@ -85,7 +86,11 @@ namespace libpaperang.Interfaces {
 			return readbuf;
 		}
 		public bool WriteBytes(byte[] packet) => Printer.tx.Write(packet, 500, out int _) == ErrorCode.None;
-		public bool WriteBytes(byte[] packet, int delay) => throw new NotImplementedException();
+		public bool WriteBytes(byte[] packet, int delay) {
+			bool _=WriteBytes(packet);
+			Thread.Sleep(delay);
+			return _;
+		}
 		public USB(BaseTypes.Model model) => iModel=model;
 	}
 }

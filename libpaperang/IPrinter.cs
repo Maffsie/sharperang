@@ -50,7 +50,7 @@ namespace libpaperang {
 			public dynamic Instance;
 		}
 	}
-	interface IPrinter {
+	public interface IPrinter {
 		short LineWidth { get; }
 		BaseTypes.Connection ConnectionMethod { get; }
 		BaseTypes.Model PrinterVariant { get; }

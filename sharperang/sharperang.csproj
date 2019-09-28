@@ -189,10 +189,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\libsharperang\libsharperang.csproj">
-      <Project>{93203f87-29d0-4cde-b2ee-156488e30186}</Project>
-      <Name>libsharperang</Name>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
+    <ProjectReference Include="..\libpaperang\libpaperang.csproj">
+      <Project>{a429cceb-9331-4cd9-b3c0-a8f736732dea}</Project>
+      <Name>libpaperang</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

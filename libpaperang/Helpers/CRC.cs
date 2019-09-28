@@ -4,13 +4,20 @@ using System.Linq;
 
 namespace libpaperang.Helpers {
 	public class CRC {
-		public uint iv { get => ~iv; private set => iv=~value; }
+		private uint _iv;
+		public uint iv { get => ~_iv; private set => _iv=~value; }
 		public uint mv = 0x35769521;
 		private uint poly = 0xedb88320;
 		private uint[] crctable;
 		public bool IsInitialised=false;
-		public CRC() => iv = 0;
-		public CRC(uint iv) => this.iv = iv;
+		public CRC(bool autoinit = true) {
+			iv = 0;
+			if(autoinit) Initialise();
+		}
+		public CRC(uint iv, bool autoinit = true) {
+			this.iv = iv;
+			if (autoinit) Initialise();
+		}
 		public void Initialise() {
 			crctable=Enumerable.Range(0, 256).Select(i => {
 				uint e=(uint)i;
@@ -33,7 +40,7 @@ namespace libpaperang.Helpers {
 		public uint GetChecksumUint<T>(IEnumerable<T> data) {
 			if (!IsInitialised) throw new CrcNotAvailableException();
 			try {
-				return ~data.Aggregate(iv,
+				return ~data.Aggregate(_iv,
 					(cti, cb) => crctable[(cti&0xFF)^Convert.ToByte(cb)]^(cti>>8));
 			} catch (FormatException e) {
 				throw new FormatException("Could not read input as a byte stream", e);

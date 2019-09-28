@@ -4,10 +4,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sharperang", "sharperang\sharperang.csproj", "{677A8867-809E-4476-A9AE-7BEB5CE02F96}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A429CCEB-9331-4CD9-B3C0-A8F736732DEA} = {A429CCEB-9331-4CD9-B3C0-A8F736732DEA}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "libsharperang", "libsharperang\libsharperang.csproj", "{93203F87-29D0-4CDE-B2EE-156488E30186}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libpaperang", "libpaperang\libpaperang.csproj", "{A429CCEB-9331-4CD9-B3C0-A8F736732DEA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "libpaperang", "libpaperang\libpaperang.csproj", "{A429CCEB-9331-4CD9-B3C0-A8F736732DEA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

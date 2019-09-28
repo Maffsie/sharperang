@@ -2,7 +2,7 @@
 using System.Linq;
 
 namespace libpaperang.Helpers {
-	class Transforms {
+	public class Transforms {
 		public BaseTypes.Packet Frame;
 		public BaseTypes.Opcodes Op;
 		public short OpLen;
@@ -30,20 +30,20 @@ namespace libpaperang.Helpers {
 					return BitConverter.GetBytes(SwapWordEndianness(
 						0x00010000 | (((((
 						Data & 0xffu) << 16) |
-						Data) & 0xffff00u) >> 8))).Skip(2).ToArray();
+						Data) & 0xffff00u) >> 8)));
 				default: throw new InvalidOperationException();
 			}
 		}
 		public byte[] Packet(byte[] oper, byte[] data, CRC checksum) {
-			byte[] packet = new byte[data.Length+6+OpLen];
+			byte[] packet = new byte[1+oper.Length+data.Length+5];
 			packet[0] = Frame.Start;
 			packet[packet.Length-1] = Frame.End;
 			Buffer.BlockCopy(oper,
-				0, packet, 1, OpLen);
+				0, packet, 1, oper.Length);
 			Buffer.BlockCopy(data,
-				0, packet, OpLen+1, packet.Length);
+				0, packet, oper.Length+1, data.Length);
 			Buffer.BlockCopy(checksum.GetChecksumBytes(data),
-				0, packet, packet.Length - (OpLen+1), 4);
+				0, packet, packet.Length - 5, 4);
 			return packet;
 		}
 		public byte[] Packet(BaseTypes.Operations oper, byte[] data, CRC checksum) =>
@@ -54,7 +54,7 @@ namespace libpaperang.Helpers {
 			return p;
 		}
 		public uint SwapWordEndianness(uint value) => (
-			(value & 0x000000ffu)  << 2) |
+			(value & 0x000000ffu)  << 24)|
 			((value & 0x0000ff00u) << 8) |
 			((value & 0x00ff0000u) >> 8) |
 			((value & 0xff000000u) >> 24);

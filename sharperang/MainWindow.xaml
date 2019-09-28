@@ -16,9 +16,10 @@
 			<Grid Margin="10,10,10,10">
 				<Button x:Name="btClearLog" Content="Clear Log" HorizontalAlignment="Left" MinWidth="75" Margin="0,2,0,152.2" Click="BtClearLog_Click"/>
 				<Button x:Name="btInitUSB" Content="Initialise USB" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="0,23,0,0" IsDefault="True" Height="21" Click="BtInitUSB_Click"/>
+				<Button x:Name="btTyP1" Content="Model P1" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="100,2,0,0" Height="21" Click="BtSetP1_Click"/>
+				<Button x:Name="btTyP2" Content="Model P2" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="100,23,0,0" Height="21" Click="BtSetP2_Click"/>
 				<Button x:Name="btTestLine" Content="Single-line test" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="0,44,0,0" Height="21" Click="BtTestLine_Click"/>
 				<Button x:Name="btLoadImage" Content="Load test image" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="0,65,0,0" Height="21" Click="BtLoadImage_Click"/>
-				<Image x:Name="imPreview" HorizontalAlignment="Left" Height="154" Margin="363,10,0,0" VerticalAlignment="Top" Width="369"/>
 			</Grid>
 		</GroupBox>
 		<TextBox x:Name="tbLog" HorizontalAlignment="Left" Margin="10,232,0,10" TextWrapping="Wrap" Width="774" Grid.ColumnSpan="3" AllowDrop="False" IsReadOnly="True" IsUndoEnabled="False" VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True" Text="{Binding Path=LogBuffer}"/>

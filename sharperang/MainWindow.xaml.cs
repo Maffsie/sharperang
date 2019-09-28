@@ -1,4 +1,7 @@
-﻿using libsharperang;
+﻿//using libsharperang;
+using libpaperang;
+using libpaperang.Interfaces;
+using libpaperang.Main;
 using System;
 using System.Windows;
 using System.Windows.Forms;
@@ -10,7 +13,10 @@ using System.IO;
 namespace sharperang {
 	public partial class MainWindow : Window {
 		private LogBridge logger;
-		private USBPrinter printer=new USBPrinter(48);
+		private BaseTypes.Connection mmjcx=BaseTypes.Connection.USB;
+		private BaseTypes.Model mmjmd=BaseTypes.Model.T1;
+		private Paperang mmj;
+		//private USBPrinter printer=new USBPrinter(48);
 		private Bitmap bimg;
 
 		public MainWindow() {
@@ -21,10 +27,19 @@ namespace sharperang {
 		}
 		private void BtClearLog_Click(object sender, RoutedEventArgs e) =>
 			logger.ClearBuffer();
+		private void BtSetP1_Click(object sender, RoutedEventArgs e) => mmjmd = BaseTypes.Model.P1;
+		private void BtSetP2_Click(object sender, RoutedEventArgs e) => mmjmd = BaseTypes.Model.P2;
 		private void BtInitUSB_Click(object sender, RoutedEventArgs e) {
+			mmj = new Paperang(mmjcx, mmjmd);
+			logger.Verbose("# printers found: " + mmj.Printer.AvailablePrinters.Count);
+			if(!mmj.Printer.PrinterAvailable) {
+				logger.Err("Couldn't initialise printer as none is connected");
+				return;
+			}
 			logger.Info("USB Initialising");
-			printer.Initialise();
+			mmj.Initialise();
 			//printer = new LibSharperang(logger);
+			/*
 			logger.Debug("IsPrinterPresent => "+printer.IsPrinterPresent());
 			logger.Debug("FoundPrinterGuids => "+printer.FoundPrinterGuids());
 			printer?.IDs?.ForEach(p => logger.Debug("FoundPrinterGuidAddrs "+p.ToString()+" => "+printer?.FoundPrinterGuidAddrs(p)));
@@ -32,9 +47,11 @@ namespace sharperang {
 			logger.Debug("Claim => " + printer?.Claim());
 			logger.Debug("Init => "+BitConverter.ToString(printer.builder.BuildTransmitCrc()).Replace('-', ' '));
 			printer.InitPrinter();
+			*/
+			logger.Debug("PrinterInitialised? " + mmj.Printer.PrinterInitialised);
 			logger.Debug("Printer initialised and ready");
 		}
-		private void BtTestLine_Click(object sender, RoutedEventArgs e) => printer.Feed(200);
+		private void BtTestLine_Click(object sender, RoutedEventArgs e) => mmj.Feed(200);
 		private void BtLoadImage_Click(object sender, RoutedEventArgs e) {
 			logger.Debug("Loading image for print");
 			OpenFileDialog r = new OpenFileDialog {
@@ -52,34 +69,34 @@ namespace sharperang {
 			r.Dispose();
 			logger.Debug("Disposed of dialog");
 			bimg=new Bitmap(_,
-											(printer.ImageWidth*8), (int)((double)(printer.ImageWidth*8)*(double)((double)_.Height/(double)_.Width)));
+											(mmj.Printer.LineWidth*8), (int)((double)(mmj.Printer.LineWidth*8)*(double)((double)_.Height/(double)_.Width)));
 			logger.Debug("Loaded image as Bitmap");
 			_.Dispose();
 			logger.Debug("Disposed of Image");
 			bimg=CopyToBpp(bimg);
 			logger.Debug("Converted Bitmap to Bitmap with 1-bit colour depth");
 			//BitArray img = new BitArray(bimg.Height*96*8);
-			byte[] iimg = new byte[bimg.Height*printer.ImageWidth];
+			byte[] iimg = new byte[bimg.Height*mmj.Printer.LineWidth];
 			byte[] img;
 			using (MemoryStream s = new MemoryStream()) {
 				bimg.Save(s, ImageFormat.Bmp);
 				img=s.ToArray();
 			}
 			logger.Debug("Got bitmap's bytes");
-			int startoffset=img.Length-(bimg.Height*printer.ImageWidth);
+			int startoffset=img.Length-(bimg.Height*mmj.Printer.LineWidth);
 			logger.Debug("Processing bytes with offset " + startoffset);
 			for(int h=0;h<bimg.Height;h++) {
-				for (int w=0;w<printer.ImageWidth;w++) {
-					iimg[(printer.ImageWidth*(bimg.Height-1-h))+(printer.ImageWidth-1-w)]=(byte)~
-						(img[startoffset+(printer.ImageWidth*h)+(printer.ImageWidth-1-w)]);
+				for (int w=0;w< mmj.Printer.LineWidth; w++) {
+					iimg[(mmj.Printer.LineWidth * (bimg.Height-1-h))+(mmj.Printer.LineWidth - 1-w)]=(byte)~
+						(img[startoffset+(mmj.Printer.LineWidth * h)+(mmj.Printer.LineWidth - 1-w)]);
 				}
 			}
 			logger.Debug("Have print data of length " + iimg.Length);
 			bimg.Dispose();
 			logger.Debug("Disposed of Bitmap");
-			printer.PrintBytes(iimg, false);
+			mmj.PrintBytes(iimg, false);
 			logger.Debug("Feeding for 200ms");
-			printer.Feed(200);
+			mmj.Feed(200);
 		}
 		static uint BitSwap1(uint x) => ((x & 0x55555555u) << 1) | ((x & (~0x55555555u)) >> 1);
 		static uint BitSwap2(uint x) => ((x & 0x33333333u) << 2) | ((x & (~0x33333333u)) >> 2);

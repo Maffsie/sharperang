@@ -1,9 +1,11 @@
 ﻿using libpaperang;
 using libpaperang.Helpers;
 using libpaperang.Interfaces;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace libpaperang.Main {
-	class Paperang {
+	public class Paperang {
 		public IPrinter Printer;
 		public Transforms Transform;
 		public CRC Crc;
@@ -28,6 +30,39 @@ namespace libpaperang.Main {
 					throw new PrinterConnectionNotSupportedException();
 			}
 		}
-
+		public void Initialise() {
+			Printer.OpenPrinter(Printer.AvailablePrinters.First());
+			Printer.Initialise();
+			Handshake();
+		}
+		public void Handshake() {
+			_ = Printer.WriteBytes(
+				Transform.Packet(
+					BaseTypes.Operations.CrcTransmit,
+					Crc.GetCrcIvBytes(),
+					new CRC(MagicValue)));
+			NoOp();
+			Feed(0);
+			NoOp();
+		}
+		public void Feed(uint ms) => Printer.WriteBytes(
+			Transform.Packet(BaseTypes.Operations.LineFeed,
+				Transform.Arg(BaseTypes.Operations.LineFeed, ms),
+				Crc));
+		public void NoOp() => Printer.WriteBytes(
+			Transform.Packet(BaseTypes.Operations.NoOp, new byte[] { 0, 0 }, Crc));
+		public void PrintBytes(byte[] data, bool autofeed = true) {
+			List<byte[]> segments = data
+				.Select((b,i) => new {Index=i,Value=b })
+				.GroupBy(b=>b.Index/1008)
+				.Select(b=>b.Select(bb=>bb.Value).ToArray())
+				.ToList();
+			segments.ForEach(b => Printer.WriteBytes(
+				Transform.Packet(
+					Transform.Arg(BaseTypes.Operations.Print, (uint)b.Length),
+					b,
+					Crc),
+				200-(b.Length/Printer.LineWidth)));
+		}
 	}
 }
