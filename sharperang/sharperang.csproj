@@ -155,7 +155,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="LogBridge.cs" />
+    <Compile Include="LUITextbox.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -189,6 +189,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\liblogtiny\liblogtiny.csproj">
+      <Project>{b7d242a8-f9de-450b-9c87-5519ca782193}</Project>
+      <Name>liblogtiny</Name>
+    </ProjectReference>
     <ProjectReference Include="..\libpaperang\libpaperang.csproj">
       <Project>{a429cceb-9331-4cd9-b3c0-a8f736732dea}</Project>
       <Name>libpaperang</Name>

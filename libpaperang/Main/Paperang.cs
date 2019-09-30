@@ -1,6 +1,6 @@
-﻿using libpaperang;
-using libpaperang.Helpers;
+﻿using libpaperang.Helpers;
 using libpaperang.Interfaces;
+using liblogtiny;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -9,6 +9,7 @@ namespace libpaperang.Main {
 		public IPrinter Printer;
 		public Transforms Transform;
 		public CRC Crc;
+		public ILogTiny logger;
 		private const uint MagicValue = 0x35769521u;
 
 		public Paperang(BaseTypes.Connection connection, BaseTypes.Model model) {
@@ -30,9 +31,12 @@ namespace libpaperang.Main {
 					throw new PrinterConnectionNotSupportedException();
 			}
 		}
+		public void SetLogContext(ILogTiny logger) => this.logger = logger;
 		public void Initialise() {
+			logger?.Trace($"Initialising libpaperang with {Printer.AvailablePrinters.Count} device(s) connected");
 			Printer.OpenPrinter(Printer.AvailablePrinters.First());
 			Printer.Initialise();
+			logger?.Trace("Initialised, sending handshake");
 			Handshake();
 		}
 		public void Handshake() {
@@ -45,19 +49,29 @@ namespace libpaperang.Main {
 			Feed(0);
 			NoOp();
 		}
-		public void Feed(uint ms) => Printer.WriteBytes(
+		public void WriteBytes(byte[] packet) {
+			logger?.Trace($"Writing packet with length {packet.Length} to printer");
+			_ = Printer.WriteBytes(packet);
+		}
+		public void WriteBytes(byte[] packet, int ms) {
+			logger?.Trace($"Writing packet with length {packet.Length} to printer with delay of {ms}ms");
+			_ = Printer.WriteBytes(packet, ms);
+		}
+		public void Feed(uint ms) => WriteBytes(
 			Transform.Packet(BaseTypes.Operations.LineFeed,
 				Transform.Arg(BaseTypes.Operations.LineFeed, ms),
 				Crc));
-		public void NoOp() => Printer.WriteBytes(
+		public void NoOp() => WriteBytes(
 			Transform.Packet(BaseTypes.Operations.NoOp, new byte[] { 0, 0 }, Crc));
 		public void PrintBytes(byte[] data, bool autofeed = true) {
+			logger?.Trace($"PrintBytes() invoked with data length of {data.Length}");
 			List<byte[]> segments = data
 				.Select((b,i) => new {Index=i,Value=b })
 				.GroupBy(b=>b.Index/1008)
 				.Select(b=>b.Select(bb=>bb.Value).ToArray())
 				.ToList();
-			segments.ForEach(b => Printer.WriteBytes(
+			logger?.Trace($"data split into {segments.Count} segment(s)");
+			segments.ForEach(b => WriteBytes(
 				Transform.Packet(
 					Transform.Arg(BaseTypes.Operations.Print, (uint)b.Length),
 					b,

@@ -12,6 +12,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "libsharperang", "libsharper
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "libpaperang", "libpaperang\libpaperang.csproj", "{A429CCEB-9331-4CD9-B3C0-A8F736732DEA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "liblogtiny", "liblogtiny\liblogtiny.csproj", "{B7D242A8-F9DE-450B-9C87-5519CA782193}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +32,10 @@ Global
 		{A429CCEB-9331-4CD9-B3C0-A8F736732DEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A429CCEB-9331-4CD9-B3C0-A8F736732DEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A429CCEB-9331-4CD9-B3C0-A8F736732DEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7D242A8-F9DE-450B-9C87-5519CA782193}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7D242A8-F9DE-450B-9C87-5519CA782193}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7D242A8-F9DE-450B-9C87-5519CA782193}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7D242A8-F9DE-450B-9C87-5519CA782193}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

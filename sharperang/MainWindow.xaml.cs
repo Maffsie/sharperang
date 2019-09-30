@@ -1,6 +1,5 @@
-﻿//using libsharperang;
+﻿using liblogtiny;
 using libpaperang;
-using libpaperang.Interfaces;
 using libpaperang.Main;
 using System;
 using System.Windows;
@@ -12,42 +11,38 @@ using System.IO;
 
 namespace sharperang {
 	public partial class MainWindow : Window {
-		private LogBridge logger;
+		private ILogTiny logger;
 		private BaseTypes.Connection mmjcx=BaseTypes.Connection.USB;
 		private BaseTypes.Model mmjmd=BaseTypes.Model.T1;
 		private Paperang mmj;
-		//private USBPrinter printer=new USBPrinter(48);
 		private Bitmap bimg;
 
 		public MainWindow() {
 			InitializeComponent();
-			logger = new LogBridge();
-			gMain.DataContext = logger;
+			logger = new LUITextbox();
+			gMain.DataContext = (LUITextbox)logger;
 			logger.Info("Application started");
 		}
 		private void BtClearLog_Click(object sender, RoutedEventArgs e) =>
-			logger.ClearBuffer();
-		private void BtSetP1_Click(object sender, RoutedEventArgs e) => mmjmd = BaseTypes.Model.P1;
-		private void BtSetP2_Click(object sender, RoutedEventArgs e) => mmjmd = BaseTypes.Model.P2;
+			logger.Raw("!clearlog");
+		private void BtSetP1_Click(object sender, RoutedEventArgs e) {
+			mmjmd = BaseTypes.Model.P1;
+			logger.Info("Model type set to P1");
+		}
+		private void BtSetP2_Click(object sender, RoutedEventArgs e) {
+			mmjmd = BaseTypes.Model.P2;
+			logger.Info("Model type set to P2");
+		}
 		private void BtInitUSB_Click(object sender, RoutedEventArgs e) {
 			mmj = new Paperang(mmjcx, mmjmd);
+			mmj.SetLogContext(logger);
 			logger.Verbose("# printers found: " + mmj.Printer.AvailablePrinters.Count);
 			if(!mmj.Printer.PrinterAvailable) {
-				logger.Err("Couldn't initialise printer as none is connected");
+				logger.Error("Couldn't initialise printer as none is connected");
 				return;
 			}
 			logger.Info("USB Initialising");
 			mmj.Initialise();
-			//printer = new LibSharperang(logger);
-			/*
-			logger.Debug("IsPrinterPresent => "+printer.IsPrinterPresent());
-			logger.Debug("FoundPrinterGuids => "+printer.FoundPrinterGuids());
-			printer?.IDs?.ForEach(p => logger.Debug("FoundPrinterGuidAddrs "+p.ToString()+" => "+printer?.FoundPrinterGuidAddrs(p)));
-			logger.Debug("Open => "+printer?.Open());
-			logger.Debug("Claim => " + printer?.Claim());
-			logger.Debug("Init => "+BitConverter.ToString(printer.builder.BuildTransmitCrc()).Replace('-', ' '));
-			printer.InitPrinter();
-			*/
 			logger.Debug("PrinterInitialised? " + mmj.Printer.PrinterInitialised);
 			logger.Debug("Printer initialised and ready");
 		}

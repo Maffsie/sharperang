@@ -9,4 +9,8 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\liblogtiny\liblogtiny.csproj" />
+  </ItemGroup>
+
 </Project>
