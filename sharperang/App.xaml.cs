@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace sharperang {
+namespace paperangapp {
 	/// <summary>
 	/// Interaction logic for App.xaml
 	/// </summary>

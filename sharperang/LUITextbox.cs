@@ -1,7 +1,7 @@
 ﻿using liblogtiny;
 using System.ComponentModel;
 
-namespace sharperang {
+namespace paperangapp {
 	class LUITextbox : ILogTiny, INotifyPropertyChanged {
 		public event PropertyChangedEventHandler PropertyChanged;
 		protected void OnPropertyChanged(string propertyName) =>

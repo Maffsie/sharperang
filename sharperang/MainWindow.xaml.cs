@@ -9,7 +9,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 
-namespace sharperang {
+namespace paperangapp {
 	public partial class MainWindow : Window {
 		private ILogTiny logger;
 		private BaseTypes.Connection mmjcx=BaseTypes.Connection.USB;
