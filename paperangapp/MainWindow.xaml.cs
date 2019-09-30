@@ -116,17 +116,19 @@ namespace paperangapp {
 			bmi.cols=new uint[256];
 			bmi.cols[0]=MAKERGB(0, 0, 0);
 			bmi.cols[1]=MAKERGB(255, 255, 255);
-			IntPtr hbm0 = CreateDIBSection(IntPtr.Zero,ref bmi,DIB_RGB_COLORS,out IntPtr _,IntPtr.Zero,0);
+			IntPtr hbm0 = CreateDIBSection(IntPtr.Zero,ref bmi,DIB_RGB_COLORS,out _,IntPtr.Zero,0);
 			IntPtr sdc = GetDC(IntPtr.Zero);
-			IntPtr hdc = CreateCompatibleDC(sdc); SelectObject(hdc, hbm);
-			IntPtr hdc0 = CreateCompatibleDC(sdc); SelectObject(hdc0, hbm0);
-			BitBlt(hdc0, 0, 0, w, h, hdc, 0, 0, SRCCOPY);
+			IntPtr hdc = CreateCompatibleDC(sdc);
+			_ = SelectObject(hdc, hbm);
+			IntPtr hdc0 = CreateCompatibleDC(sdc);
+			_ = SelectObject(hdc0, hbm0);
+			_ = BitBlt(hdc0, 0, 0, w, h, hdc, 0, 0, SRCCOPY);
 			Bitmap b0 = Image.FromHbitmap(hbm0);
-			DeleteDC(hdc);
-			DeleteDC(hdc0);
-			ReleaseDC(IntPtr.Zero, sdc);
-			DeleteObject(hbm);
-			DeleteObject(hbm0);
+			_ = DeleteDC(hdc);
+			_ = DeleteDC(hdc0);
+			_ = ReleaseDC(IntPtr.Zero, sdc);
+			_ = DeleteObject(hbm);
+			_ = DeleteObject(hbm0);
 			return b0;
 		}
 		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
