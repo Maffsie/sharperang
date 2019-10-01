@@ -14,10 +14,11 @@ namespace libpaperang {
 			public byte End;
 		}
 		public enum Model {
-			P1,
-			T1,
-			P2,
-			P2S
+			P1, // Original model; 57mm feed, 48-byte lines (200DPI), LiPo battery (1Ah)
+			P1S,// Original "special edition" model; identical to P1 but in different colours
+			T1, // Label printer model; 15mm feed, unknown-byte lines, 4xAAA battery
+			P2, // Hi-DPI model; 57mm feed, 96-byte lines (300DPI), LiPo battery (1Ah)
+			P2S // Hi-DPI "special edition" model; identical to P2 but includes Pomodoro timer functionality
 		}
 		public enum State {
 			Offline,
@@ -36,6 +37,7 @@ namespace libpaperang {
 			CrcTransmit,
 			Print
 		}
+		//I'm sure there are other opcodes available but these are the "core" ones implemented by the official MiaoMiaoJi chinese Windows and OSX apps
 		public struct Opcodes {
 			public byte[] NoOp;
 			public byte[] LineFeed;

@@ -46,7 +46,22 @@ namespace paperangapp {
 			logger.Debug("PrinterInitialised? " + mmj.Printer.PrinterInitialised);
 			logger.Debug("Printer initialised and ready");
 		}
-		private void BtTestLine_Click(object sender, RoutedEventArgs e) => mmj.Feed(200);
+		private void BtTestLine_Click(object sender, RoutedEventArgs e) {
+			string Font="Consolas";
+			int FontSize=48;
+
+			Bitmap b=new Bitmap(mmj.Printer.LineWidth*8, (FontSize+4)*10);
+			g=Graphics.FromImage(b);
+			g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
+			g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+			g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+			g.DrawString("hello", new Font(Font, FontSize), Brushes.Black, new RectangleF(0, 0, b.Width, b.Height));
+			g.Flush();
+			PrintBitmap(b);
+			g.Dispose();
+			b.Dispose();
+		}
 		private void BtLoadImage_Click(object sender, RoutedEventArgs e) {
 			logger.Debug("Loading image for print");
 			OpenFileDialog r = new OpenFileDialog {
@@ -68,22 +83,25 @@ namespace paperangapp {
 			logger.Debug("Loaded image as Bitmap");
 			_.Dispose();
 			logger.Debug("Disposed of Image");
-			bimg=CopyToBpp(bimg);
+			PrintBitmap(bimg);
+		}
+		private void PrintBitmap(Bitmap bimg) {
+			bimg = CopyToBpp(bimg);
 			logger.Debug("Converted Bitmap to Bitmap with 1-bit colour depth");
 			//BitArray img = new BitArray(bimg.Height*96*8);
 			byte[] iimg = new byte[bimg.Height*mmj.Printer.LineWidth];
 			byte[] img;
-			using (MemoryStream s = new MemoryStream()) {
+			using(MemoryStream s = new MemoryStream()) {
 				bimg.Save(s, ImageFormat.Bmp);
-				img=s.ToArray();
+				img = s.ToArray();
 			}
 			logger.Debug("Got bitmap's bytes");
 			int startoffset=img.Length-(bimg.Height*mmj.Printer.LineWidth);
 			logger.Debug("Processing bytes with offset " + startoffset);
-			for(int h=0;h<bimg.Height;h++) {
-				for (int w=0;w< mmj.Printer.LineWidth; w++) {
-					iimg[(mmj.Printer.LineWidth * (bimg.Height-1-h))+(mmj.Printer.LineWidth - 1-w)]=(byte)~
-						(img[startoffset+(mmj.Printer.LineWidth * h)+(mmj.Printer.LineWidth - 1-w)]);
+			for(int h = 0; h < bimg.Height; h++) {
+				for(int w = 0; w < mmj.Printer.LineWidth; w++) {
+					iimg[(mmj.Printer.LineWidth * (bimg.Height - 1 - h)) + (mmj.Printer.LineWidth - 1 - w)] = (byte)~
+						(img[startoffset + (mmj.Printer.LineWidth * h) + (mmj.Printer.LineWidth - 1 - w)]);
 				}
 			}
 			logger.Debug("Have print data of length " + iimg.Length);
