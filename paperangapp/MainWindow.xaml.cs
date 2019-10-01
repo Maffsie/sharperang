@@ -15,8 +15,8 @@ namespace paperangapp {
 		private BaseTypes.Connection mmjcx=BaseTypes.Connection.USB;
 		private BaseTypes.Model mmjmd=BaseTypes.Model.T1;
 		private Paperang mmj;
-		private Bitmap bimg;
 
+		// TODO: is it out of scope for this library to provide functionality for printing bitmap data?
 		public MainWindow() {
 			InitializeComponent();
 			logger = new LUITextbox();
@@ -25,13 +25,17 @@ namespace paperangapp {
 		}
 		private void BtClearLog_Click(object sender, RoutedEventArgs e) =>
 			logger.Raw("!clearlog");
-		private void BtSetP1_Click(object sender, RoutedEventArgs e) {
+		private void SetP1_Click(object sender, RoutedEventArgs e) {
 			mmjmd = BaseTypes.Model.P1;
-			logger.Info("Model type set to P1");
+			logger.Info("Model type set to P1 or P1S");
 		}
-		private void BtSetP2_Click(object sender, RoutedEventArgs e) {
+		private void SetP2_Click(object sender, RoutedEventArgs e) {
 			mmjmd = BaseTypes.Model.P2;
-			logger.Info("Model type set to P2");
+			logger.Info("Model type set to P2 or P2S");
+		}
+		private void SetT1_Click(object sender, RoutedEventArgs e) {
+			mmjmd = BaseTypes.Model.T1;
+			logger.Info("Model type set to T1");
 		}
 		private void BtInitUSB_Click(object sender, RoutedEventArgs e) {
 			mmj = new Paperang(mmjcx, mmjmd);
@@ -45,29 +49,45 @@ namespace paperangapp {
 			mmj.Initialise();
 			logger.Debug("PrinterInitialised? " + mmj.Printer.PrinterInitialised);
 			logger.Debug("Printer initialised and ready");
+			btInitUSB.IsEnabled = false;
+			btDeInitUSB.IsEnabled = true;
+			gbOtherFunc.IsEnabled = true;
+			gbPrinting.IsEnabled = true;
 		}
-		private void BtTestLine_Click(object sender, RoutedEventArgs e) {
-			string Font="Consolas";
-			int FontSize=48;
-
-			Bitmap b=new Bitmap(mmj.Printer.LineWidth*8, (FontSize+4)*10);
-			g=Graphics.FromImage(b);
+		private void BtDeInitUSB_Click(object sender, RoutedEventArgs e) {
+			mmj.Printer.ClosePrinter();
+			mmj.Printer.Deinitialise();
+			mmj = null;
+			gbPrinting.IsEnabled = false;
+			gbOtherFunc.IsEnabled = false;
+			btInitUSB.IsEnabled = true;
+			btDeInitUSB.IsEnabled = false;
+			
+		}
+		private void BtFeed_Click(object sender, RoutedEventArgs e) => mmj.Feed((uint)slFeedTime.Value);
+		private void BtPrintText_Click(object sender, RoutedEventArgs e) {
+			Font fnt=new Font(txFont.Text, int.Parse(txSzF.Text));
+			Graphics g=Graphics.FromImage(new Bitmap(mmj.Printer.LineWidth*8, 1));
+			SizeF szText=g.MeasureString(txInput.Text, fnt);
+			g.Dispose();
+			Bitmap b=new Bitmap(mmj.Printer.LineWidth*8, (int)szText.Height);
+			g = Graphics.FromImage(b);
 			g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
 			g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
 			g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-			g.DrawString("hello", new Font(Font, FontSize), Brushes.Black, new RectangleF(0, 0, b.Width, b.Height));
+			g.DrawString(txInput.Text, fnt, Brushes.Black, new PointF(0,0));
 			g.Flush();
 			PrintBitmap(b);
 			g.Dispose();
 			b.Dispose();
 		}
-		private void BtLoadImage_Click(object sender, RoutedEventArgs e) {
+		private void BtPrintImage_Click(object sender, RoutedEventArgs e) {
 			logger.Debug("Loading image for print");
 			OpenFileDialog r = new OpenFileDialog {
 				Title="Select 1 (one) image file",
 				Multiselect=false,
-				Filter="PNG files (*.png)|*.png|JPEG files (*.jpe?g)|*.jpg *.jpeg|Jraphics Interchange Format files (*.gif)|*.gif|Bitte-Mappe files (*.bmp)|*.bmp|All of the above|*.jpg *.jpeg *.png *.gif *.bmp",
+				Filter="PNG files|*.png|JPEG files|*.jpg;*.jpeg|Jraphics Interchange Format files|*.gif|Bitte-Mappe files|*.bmp|All of the above|*.jpg;*.jpeg;*.png;*.gif;*.bmp",
 				AutoUpgradeEnabled=true
 			};
 			if (r.ShowDialog() == System.Windows.Forms.DialogResult.Cancel) {
@@ -78,8 +98,8 @@ namespace paperangapp {
 			logger.Debug("Loaded image " + r.FileName);
 			r.Dispose();
 			logger.Debug("Disposed of dialog");
-			bimg=new Bitmap(_,
-											(mmj.Printer.LineWidth*8), (int)((double)(mmj.Printer.LineWidth*8)*(double)((double)_.Height/(double)_.Width)));
+			Bitmap bimg=new Bitmap(_, (mmj.Printer.LineWidth*8),
+				(int)((double)(mmj.Printer.LineWidth*8)*(double)((double)_.Height/(double)_.Width)));
 			logger.Debug("Loaded image as Bitmap");
 			_.Dispose();
 			logger.Debug("Disposed of Image");
@@ -87,29 +107,28 @@ namespace paperangapp {
 		}
 		private void PrintBitmap(Bitmap bimg) {
 			bimg = CopyToBpp(bimg);
-			logger.Debug("Converted Bitmap to Bitmap with 1-bit colour depth");
-			//BitArray img = new BitArray(bimg.Height*96*8);
-			byte[] iimg = new byte[bimg.Height*mmj.Printer.LineWidth];
+			logger.Debug("Converted Bitmap to 1-bit");
+			int hSzImg=bimg.Height;
+			byte[] iimg = new byte[hSzImg*mmj.Printer.LineWidth];
 			byte[] img;
 			using(MemoryStream s = new MemoryStream()) {
 				bimg.Save(s, ImageFormat.Bmp);
 				img = s.ToArray();
 			}
 			logger.Debug("Got bitmap's bytes");
-			int startoffset=img.Length-(bimg.Height*mmj.Printer.LineWidth);
+			bimg.Dispose();
+			logger.Debug("Disposed of Bitmap");
+			int startoffset=img.Length-(hSzImg*mmj.Printer.LineWidth);
 			logger.Debug("Processing bytes with offset " + startoffset);
-			for(int h = 0; h < bimg.Height; h++) {
+			for(int h = 0; h < hSzImg; h++) {
 				for(int w = 0; w < mmj.Printer.LineWidth; w++) {
-					iimg[(mmj.Printer.LineWidth * (bimg.Height - 1 - h)) + (mmj.Printer.LineWidth - 1 - w)] = (byte)~
+					iimg[(mmj.Printer.LineWidth * (hSzImg - 1 - h)) + (mmj.Printer.LineWidth - 1 - w)] = (byte)~
 						(img[startoffset + (mmj.Printer.LineWidth * h) + (mmj.Printer.LineWidth - 1 - w)]);
 				}
 			}
-			logger.Debug("Have print data of length " + iimg.Length);
-			bimg.Dispose();
-			logger.Debug("Disposed of Bitmap");
+			logger.Debug($"Have {img.Length} bytes of print data ({mmj.Printer.LineWidth*8}x{hSzImg}@1bpp)");
 			mmj.PrintBytes(iimg, false);
-			logger.Debug("Feeding for 200ms");
-			mmj.Feed(200);
+			mmj.Feed(175);
 		}
 		static uint BitSwap1(uint x) => ((x & 0x55555555u) << 1) | ((x & (~0x55555555u)) >> 1);
 		static uint BitSwap2(uint x) => ((x & 0x33333333u) << 2) | ((x & (~0x33333333u)) >> 2);

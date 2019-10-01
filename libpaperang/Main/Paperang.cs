@@ -57,12 +57,20 @@ namespace libpaperang.Main {
 			logger?.Trace($"Writing packet with length {packet.Length} to printer with delay of {ms}ms");
 			_ = Printer.WriteBytes(packet, ms);
 		}
-		public void Feed(uint ms) => WriteBytes(
-			Transform.Packet(BaseTypes.Operations.LineFeed,
-				Transform.Arg(BaseTypes.Operations.LineFeed, ms),
+		public void Feed(uint ms) {
+			logger?.Trace($"Feeding for {ms}ms");
+			WriteBytes(
+				Transform.Packet(BaseTypes.Operations.LineFeed,
+					Transform.Arg(BaseTypes.Operations.LineFeed, ms),
 				Crc));
+		}
 		public void NoOp() => WriteBytes(
 			Transform.Packet(BaseTypes.Operations.NoOp, new byte[] { 0, 0 }, Crc));
+		public void Poll() {
+			logger?.Trace("Polling attached printer");
+			Feed(0);
+			NoOp();
+		}
 		public void PrintBytes(byte[] data, bool autofeed = true) {
 			logger?.Trace($"PrintBytes() invoked with data length of {data.Length}");
 			List<byte[]> segments = data

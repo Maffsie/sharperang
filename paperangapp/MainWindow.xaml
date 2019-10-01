@@ -5,23 +5,52 @@
 				xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 				xmlns:local="clr-namespace:paperangapp"
 				mc:Ignorable="d"
-				Title="MainWindow" Height="450" Width="800">
+				Title="libpaperang Test Utility" Height="450" Width="800" ResizeMode="NoResize">
 	<Grid x:Name="gMain">
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="159*"/>
-			<ColumnDefinition Width="151*"/>
-			<ColumnDefinition Width="483*"/>
-		</Grid.ColumnDefinitions>
-		<GroupBox Header="libpaperang Library Tester" Margin="10,10,9.6,0" Grid.ColumnSpan="3" Height="217" VerticalAlignment="Top">
-			<Grid Margin="10,10,10,10">
-				<Button x:Name="btClearLog" Content="Clear Log" HorizontalAlignment="Left" MinWidth="75" Margin="0,2,0,152.2" Click="BtClearLog_Click"/>
-				<Button x:Name="btInitUSB" Content="Initialise USB" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="0,23,0,0" IsDefault="True" Height="21" Click="BtInitUSB_Click"/>
-				<Button x:Name="btTyP1" Content="Model P1" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="100,2,0,0" Height="21" Click="BtSetP1_Click"/>
-				<Button x:Name="btTyP2" Content="Model P2" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="100,23,0,0" Height="21" Click="BtSetP2_Click"/>
-				<Button x:Name="btTestLine" Content="Single-line test" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="0,44,0,0" Height="21" Click="BtTestLine_Click"/>
-				<Button x:Name="btLoadImage" Content="Load test image" HorizontalAlignment="Left" VerticalAlignment="Top" MinWidth="75" Margin="0,65,0,0" Height="21" Click="BtLoadImage_Click"/>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="225*"/>
+			<RowDefinition Height="225*"/>
+		</Grid.RowDefinitions>
+		<GroupBox Header="libpaperang Library Tester" Margin="2,0,2,0" Grid.Row="0" Grid.Column="0">
+			<Grid Margin="0,0,0,0" Grid.Column="0" Grid.ColumnSpan="3">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="10*"/>
+					<ColumnDefinition Width="15*"/>
+					<ColumnDefinition Width="30*"/>
+				</Grid.ColumnDefinitions>
+				<GroupBox x:Name="gbInit" Header="Initialisation" Margin="2,2,2,2" Grid.Column="0">
+					<Grid Margin="0">
+						<RadioButton x:Name="rbP1" Content="P1/P1S" Margin="10,10,10,0" Click="SetP1_Click" ToolTip="Paperang model P1 or P1S" GroupName="rbgModel" Height="15" VerticalAlignment="Top"/>
+						<RadioButton x:Name="rbP2" Content="P2/P2S" Margin="10,30,10,0" Click="SetP2_Click" VerticalAlignment="Top" GroupName="rbgModel" ToolTip="Paperang model P2 or P2S"/>
+						<RadioButton x:Name="rbT1" Content="T1" Margin="10,50,10,0" Click="SetT1_Click" VerticalAlignment="Top" IsChecked="True" ToolTip="Paperang model T1, a tape-esque label printer" GroupName="rbgModel"/>
+						<Button x:Name="btInitUSB" Content="Initialise" MinWidth="75" Margin="10,0,10,36" IsDefault="True" Click="BtInitUSB_Click" Height="21" VerticalAlignment="Bottom"/>
+						<Button x:Name="btDeInitUSB" Content="Deinitialise" MinWidth="75" Margin="10,0,10,10" Click="BtDeInitUSB_Click" Height="21" VerticalAlignment="Bottom" IsEnabled="False"/>
+					</Grid>
+				</GroupBox>
+				<GroupBox x:Name="gbOtherFunc" Header="Other Functions" Margin="2,2,2,2" Grid.Column="1" IsEnabled="False">
+					<Grid Margin="0,0,0,0">
+						<Slider x:Name="slFeedTime" Margin="10,44,10,0" Maximum="500" Value="80" TickPlacement="Both" SmallChange="5" TickFrequency="5" LargeChange="25" ToolTip="Choose how long, in milliseconds, the printer should feed paper for" IsMoveToPointEnabled="True" IsSnapToTickEnabled="True" Height="33" VerticalAlignment="Top"/>
+						<Button x:Name="btFeed" Content="Feed" VerticalAlignment="Top" MinWidth="75" Margin="0,13,12,0" Height="21" Click="BtFeed_Click" Width="73" HorizontalAlignment="Right"/>
+						<Label x:Name="label" Content="Feed (ms)" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="79"/>
+					</Grid>
+				</GroupBox>
+				<GroupBox x:Name="gbPrinting" Header="Printing" Margin="2,2,2,2" Grid.Column="2" Grid.ColumnSpan="2" IsEnabled="False">
+					<Grid Margin="0,0,0,0">
+						<Button x:Name="btPrintImage" Content="Print Image" HorizontalAlignment="Left" MinWidth="75" Margin="10,0,0,10" Click="BtPrintImage_Click" Height="21" VerticalAlignment="Bottom"/>
+						<Button x:Name="btPrintText" Content="Print Text" HorizontalAlignment="Left" MinWidth="75" Margin="90,0,0,10" Click="BtPrintText_Click" Height="21" VerticalAlignment="Bottom"/>
+						<TextBox x:Name="txInput" Margin="180,2,2,2" TextWrapping="Wrap" Text="" AcceptsReturn="True" SpellCheck.IsEnabled="True"/>
+						<TextBox x:Name="txFont" HorizontalAlignment="Left" Height="23" Margin="10,2,0,0" TextWrapping="Wrap" Text="Consolas" VerticalAlignment="Top" Width="165"/>
+						<TextBox x:Name="txSzF" HorizontalAlignment="Left" Height="23" Margin="10,30,0,0" Text="12" VerticalAlignment="Top" Width="54" UndoLimit="1" MaxLines="1" IsUndoEnabled="False" MaxLength="3" AllowDrop="False" ToolTip="Please choose a font size"/>
+					</Grid>
+				</GroupBox>
 			</Grid>
 		</GroupBox>
-		<TextBox x:Name="tbLog" HorizontalAlignment="Left" Margin="10,232,0,10" TextWrapping="Wrap" Width="774" Grid.ColumnSpan="3" AllowDrop="False" IsReadOnly="True" IsUndoEnabled="False" VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True" Text="{Binding Path=LogBuffer}"/>
+		<Expander x:Name="expander" Header="Log" Margin="2,2,2,2" Grid.Row="1" IsExpanded="True">
+			<Grid>
+				<TextBox x:Name="tbLog" Margin="2,2,2,23" TextWrapping="Wrap" AllowDrop="False" IsReadOnly="True" IsUndoEnabled="False" VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" Text="{Binding Path=LogBuffer}" UseLayoutRounding="True"/>
+				<Button x:Name="btClearLog" Content="Clear Log" MinWidth="75" Margin="0,0,0,0" Click="BtClearLog_Click" Height="21" VerticalAlignment="Bottom"/>
+			</Grid>
+		</Expander>
+
 	</Grid>
 </Window>
