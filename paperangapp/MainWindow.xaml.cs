@@ -19,7 +19,7 @@ namespace paperangapp {
 		private IPrinter prtr=new USB(BaseTypes.Model.None); // T1 used as a generic, prtr used soley for the PrinterAvailable attr. all paperang devices tested report the exact same USB identifiers.
 		private Paperang mmj=null;
 		private System.Timers.Timer usbpoll;
-		private uint dThresh=127;
+		//private uint dThresh=127;
 		private enum AppState {
 			UnInitNoDev,
 			UnInitDev,
