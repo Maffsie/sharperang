@@ -22,14 +22,14 @@
 					<Grid Margin="0">
 						<RadioButton x:Name="rbP1" Content="P1/P1S" Margin="10,10,10,0" Click="SetP1_Click" ToolTip="Paperang model P1 or P1S" GroupName="rbgModel" Height="15" VerticalAlignment="Top"/>
 						<RadioButton x:Name="rbP2" Content="P2/P2S" Margin="10,30,10,0" Click="SetP2_Click" VerticalAlignment="Top" GroupName="rbgModel" ToolTip="Paperang model P2 or P2S"/>
-						<RadioButton x:Name="rbT1" Content="T1" Margin="10,50,10,0" Click="SetT1_Click" VerticalAlignment="Top" IsChecked="True" ToolTip="Paperang model T1, a tape-esque label printer" GroupName="rbgModel"/>
+						<RadioButton x:Name="rbT1" Content="T1" Margin="10,50,10,0" Click="SetT1_Click" VerticalAlignment="Top" ToolTip="Paperang model T1, a tape-esque label printer" GroupName="rbgModel"/>
 						<Button x:Name="btInitUSB" Content="Initialise" MinWidth="75" Margin="10,0,10,36" IsDefault="True" Click="BtInitUSB_Click" Height="21" VerticalAlignment="Bottom"/>
 						<Button x:Name="btDeInitUSB" Content="Deinitialise" MinWidth="75" Margin="10,0,10,10" Click="BtDeInitUSB_Click" Height="21" VerticalAlignment="Bottom" IsEnabled="False"/>
 					</Grid>
 				</GroupBox>
 				<GroupBox x:Name="gbOtherFunc" Header="Other Functions" Margin="2,2,2,2" Grid.Column="1" IsEnabled="False">
 					<Grid Margin="0,0,0,0">
-						<Slider x:Name="slFeedTime" Margin="10,44,10,0" Maximum="500" Value="175" TickPlacement="Both" SmallChange="5" TickFrequency="5" LargeChange="25" ToolTip="Choose how long, in milliseconds, the printer should feed paper for" IsMoveToPointEnabled="True" IsSnapToTickEnabled="True" Height="33" VerticalAlignment="Top"/>
+						<Slider x:Name="slFeedTime" Margin="10,44,10,0" Maximum="500" Value="175" TickPlacement="Both" SmallChange="5" TickFrequency="5" LargeChange="25" IsMoveToPointEnabled="True" IsSnapToTickEnabled="True" Height="33" VerticalAlignment="Top"/>
 						<Button x:Name="btFeed" Content="Feed" VerticalAlignment="Top" MinWidth="75" Margin="0,13,12,0" Height="21" Click="BtFeed_Click" Width="73" HorizontalAlignment="Right"/>
 						<Label x:Name="label" Content="Feed (ms)" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="79"/>
 					</Grid>

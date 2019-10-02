@@ -15,10 +15,11 @@ namespace paperangapp {
 	public partial class MainWindow : Window {
 		private ILogTiny logger;
 		private BaseTypes.Connection mmjcx=BaseTypes.Connection.USB;
-		private BaseTypes.Model mmjmd=BaseTypes.Model.T1;
-		private IPrinter prtr=new USB(BaseTypes.Model.T1); // T1 used as a generic, prtr used soley for the PrinterAvailable attr. all paperang devices tested report the exact same USB identifiers.
+		private BaseTypes.Model mmjmd=BaseTypes.Model.None;
+		private IPrinter prtr=new USB(BaseTypes.Model.None); // T1 used as a generic, prtr used soley for the PrinterAvailable attr. all paperang devices tested report the exact same USB identifiers.
 		private Paperang mmj=null;
 		private System.Timers.Timer usbpoll;
+		private uint dThresh=127;
 		private enum AppState {
 			UnInitNoDev,
 			UnInitDev,

@@ -14,6 +14,7 @@ namespace libpaperang {
 			public byte End;
 		}
 		public enum Model {
+			None,
 			P1, // Original model; 57mm feed, 48-byte lines (200DPI), LiPo battery (1Ah)
 			P1S,// Original "special edition" model; identical to P1 but in different colours
 			T1, // Label printer model; 15mm feed, unknown-byte lines, 4xAAA battery
