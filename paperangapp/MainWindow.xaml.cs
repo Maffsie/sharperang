@@ -1,7 +1,9 @@
 ﻿using liblogtiny;
 using libpaperang;
+using libpaperang.Interfaces;
 using libpaperang.Main;
 using System;
+using System.Timers;
 using System.Windows;
 using System.Windows.Forms;
 //testing
@@ -14,14 +16,53 @@ namespace paperangapp {
 		private ILogTiny logger;
 		private BaseTypes.Connection mmjcx=BaseTypes.Connection.USB;
 		private BaseTypes.Model mmjmd=BaseTypes.Model.T1;
-		private Paperang mmj;
-
+		private IPrinter prtr=new USB(BaseTypes.Model.T1); // T1 used as a generic, prtr used soley for the PrinterAvailable attr. all paperang devices tested report the exact same USB identifiers.
+		private Paperang mmj=null;
+		private System.Timers.Timer usbpoll;
+		private enum AppState {
+			UnInitNoDev,
+			UnInitDev,
+			InitDev
+		};
+		private AppState state=AppState.UnInitNoDev;
 		// TODO: is it out of scope for this library to provide functionality for printing bitmap data?
 		public MainWindow() {
 			InitializeComponent();
 			logger = new LUITextbox();
 			gMain.DataContext = (LUITextbox)logger;
 			logger.Info("Application started");
+			usbpoll = new System.Timers.Timer(200) {
+				AutoReset = true
+			};
+			usbpoll.Elapsed += evtUsbPoll;
+			usbpoll.Start();
+			logger.Verbose("USB presence interval event started");
+		}
+
+		private void evtUsbPoll(object sender, ElapsedEventArgs e) =>_ = Dispatcher.BeginInvoke(new invDgtUsbPoll(dgtUsbPoll));
+		private delegate void invDgtUsbPoll();
+		private void dgtUsbPoll() {
+			try {
+				if(state == AppState.UnInitNoDev && prtr.PrinterAvailable) {
+					btInitUSB.IsEnabled = true;
+					state = AppState.UnInitDev;
+					logger.Info("Printer plugged in");
+				} else if(state == AppState.UnInitDev && !prtr.PrinterAvailable) {
+					btInitUSB.IsEnabled = false;
+					state = AppState.UnInitNoDev;
+					logger.Info("Printer unplugged");
+				} else if(state == AppState.InitDev && !prtr.PrinterAvailable) {
+					logger.Info("Printer unplugged while initialised");
+					USBDeInit();
+				}
+
+			} catch(Exception) {
+			} finally { }
+		}
+
+		~MainWindow() {
+			logger.Warn("Application closing");
+			if(mmj!=null) USBDeInit();
 		}
 		private void BtClearLog_Click(object sender, RoutedEventArgs e) =>
 			logger.Raw("!clearlog");
@@ -37,7 +78,8 @@ namespace paperangapp {
 			mmjmd = BaseTypes.Model.T1;
 			logger.Info("Model type set to T1");
 		}
-		private void BtInitUSB_Click(object sender, RoutedEventArgs e) {
+		private void BtInitUSB_Click(object sender, RoutedEventArgs e) => USBInit();
+		private void USBInit() {
 			mmj = new Paperang(mmjcx, mmjmd);
 			mmj.SetLogContext(logger);
 			logger.Verbose("# printers found: " + mmj.Printer.AvailablePrinters.Count);
@@ -49,20 +91,26 @@ namespace paperangapp {
 			mmj.Initialise();
 			logger.Debug("PrinterInitialised? " + mmj.Printer.PrinterInitialised);
 			logger.Debug("Printer initialised and ready");
+			state = AppState.InitDev;
 			btInitUSB.IsEnabled = false;
 			btDeInitUSB.IsEnabled = true;
 			gbOtherFunc.IsEnabled = true;
 			gbPrinting.IsEnabled = true;
 		}
-		private void BtDeInitUSB_Click(object sender, RoutedEventArgs e) {
+		private void BtDeInitUSB_Click(object sender, RoutedEventArgs e) => USBDeInit();
+		private void USBDeInit() {
+			logger.Info("De-initialising printer");
 			mmj.Printer.ClosePrinter();
 			mmj.Printer.Deinitialise();
 			mmj = null;
-			gbPrinting.IsEnabled = false;
-			gbOtherFunc.IsEnabled = false;
-			btInitUSB.IsEnabled = true;
-			btDeInitUSB.IsEnabled = false;
-			
+			state = AppState.UnInitDev;
+			try {
+				gbPrinting.IsEnabled = false;
+				gbOtherFunc.IsEnabled = false;
+				btInitUSB.IsEnabled = true;
+				btDeInitUSB.IsEnabled = false;
+			} catch(Exception) {
+			} finally { }
 		}
 		private void BtFeed_Click(object sender, RoutedEventArgs e) => mmj.Feed((uint)slFeedTime.Value);
 		private void BtPrintText_Click(object sender, RoutedEventArgs e) {
@@ -128,12 +176,13 @@ namespace paperangapp {
 			}
 			logger.Debug($"Have {img.Length} bytes of print data ({mmj.Printer.LineWidth*8}x{hSzImg}@1bpp)");
 			mmj.PrintBytes(iimg, false);
-			mmj.Feed(175);
+			//mmj.Feed(175);
 		}
 		static uint BitSwap1(uint x) => ((x & 0x55555555u) << 1) | ((x & (~0x55555555u)) >> 1);
 		static uint BitSwap2(uint x) => ((x & 0x33333333u) << 2) | ((x & (~0x33333333u)) >> 2);
 		static uint BitSwap4(uint x) => ((x & 0x0f0f0f0fu) << 4) | ((x & (~0x0f0f0f0fu)) >> 4);
 		static uint BitSwap(uint x) => BitSwap4(BitSwap2(BitSwap1(x)));
+		#region GDIBitmap1bpp
 		static Bitmap CopyToBpp(Bitmap b) {
 			int w=b.Width, h=b.Height;
 			IntPtr hbm = b.GetHbitmap();
@@ -199,5 +248,6 @@ namespace paperangapp {
 			public uint[] cols;
 		}
 		static uint MAKERGB(int r, int g, int b) => ((uint)(b&255)) | ((uint)((r&255)<<8)) | ((uint)((g&255)<<16));
+		#endregion
 	}
 }

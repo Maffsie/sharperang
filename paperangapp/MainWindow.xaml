@@ -29,7 +29,7 @@
 				</GroupBox>
 				<GroupBox x:Name="gbOtherFunc" Header="Other Functions" Margin="2,2,2,2" Grid.Column="1" IsEnabled="False">
 					<Grid Margin="0,0,0,0">
-						<Slider x:Name="slFeedTime" Margin="10,44,10,0" Maximum="500" Value="80" TickPlacement="Both" SmallChange="5" TickFrequency="5" LargeChange="25" ToolTip="Choose how long, in milliseconds, the printer should feed paper for" IsMoveToPointEnabled="True" IsSnapToTickEnabled="True" Height="33" VerticalAlignment="Top"/>
+						<Slider x:Name="slFeedTime" Margin="10,44,10,0" Maximum="500" Value="175" TickPlacement="Both" SmallChange="5" TickFrequency="5" LargeChange="25" ToolTip="Choose how long, in milliseconds, the printer should feed paper for" IsMoveToPointEnabled="True" IsSnapToTickEnabled="True" Height="33" VerticalAlignment="Top"/>
 						<Button x:Name="btFeed" Content="Feed" VerticalAlignment="Top" MinWidth="75" Margin="0,13,12,0" Height="21" Click="BtFeed_Click" Width="73" HorizontalAlignment="Right"/>
 						<Label x:Name="label" Content="Feed (ms)" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="79"/>
 					</Grid>
@@ -38,9 +38,9 @@
 					<Grid Margin="0,0,0,0">
 						<Button x:Name="btPrintImage" Content="Print Image" HorizontalAlignment="Left" MinWidth="75" Margin="10,0,0,10" Click="BtPrintImage_Click" Height="21" VerticalAlignment="Bottom"/>
 						<Button x:Name="btPrintText" Content="Print Text" HorizontalAlignment="Left" MinWidth="75" Margin="90,0,0,10" Click="BtPrintText_Click" Height="21" VerticalAlignment="Bottom"/>
-						<TextBox x:Name="txInput" Margin="180,2,2,2" TextWrapping="Wrap" Text="" AcceptsReturn="True" SpellCheck.IsEnabled="True"/>
 						<TextBox x:Name="txFont" HorizontalAlignment="Left" Height="23" Margin="10,2,0,0" TextWrapping="Wrap" Text="Consolas" VerticalAlignment="Top" Width="165"/>
 						<TextBox x:Name="txSzF" HorizontalAlignment="Left" Height="23" Margin="10,30,0,0" Text="12" VerticalAlignment="Top" Width="54" UndoLimit="1" MaxLines="1" IsUndoEnabled="False" MaxLength="3" AllowDrop="False" ToolTip="Please choose a font size"/>
+						<TextBox x:Name="txInput" Margin="180,2,2,2" TextWrapping="Wrap" Text="" AcceptsReturn="True" SpellCheck.IsEnabled="True"/>
 					</Grid>
 				</GroupBox>
 			</Grid>
