@@ -13,6 +13,7 @@ using libpaperang.Main;
 
 namespace paperangapp {
 	public partial class MainWindow : Window {
+		//TODO memory optimisation - this thing is a hongery boi
 		private ILogTiny logger;
 		private BaseTypes.Connection mmjcx=BaseTypes.Connection.USB;
 		private BaseTypes.Model mmjmd=BaseTypes.Model.None;
@@ -114,8 +115,7 @@ namespace paperangapp {
 			} catch(Exception) {
 			} finally { }
 		}
-		private async void BtFeed_Click(object sender, RoutedEventArgs e) => await FeedAsync((uint)slFeedTime.Value);
-		private async Task FeedAsync(uint time) => await Task.Run(() => mmj.Feed(time));
+		private async void BtFeed_Click(object sender, RoutedEventArgs e) => await mmj.FeedAsync((uint)slFeedTime.Value);
 		private async void BtPrintText_Click(object sender, RoutedEventArgs e) {
 			if(!(txInput.Text.Length > 0)) {
 				logger.Warn("PrintText event but nothing to print.");
@@ -125,17 +125,20 @@ namespace paperangapp {
 		}
 		private async Task PrintTextAsync(string text, string font, int szf) {
 			Font fnt=new Font(font, szf);
-			Graphics g=Graphics.FromImage(new Bitmap(mmj.Printer.LineWidth*8, 1));
-			System.Drawing.Size szText = TextRenderer.MeasureText(g, text, fnt);
-			//SizeF szText=g.MeasureString(txInput.Text, fnt);
-			g.Dispose();
-			Bitmap b=new Bitmap(mmj.Printer.LineWidth*8, (int)szText.Height);
-			g = Graphics.FromImage(b);
+			TextFormatFlags tf=
+				TextFormatFlags.Left |
+				TextFormatFlags.NoPadding |
+				TextFormatFlags.NoPrefix |
+				TextFormatFlags.Top |
+				TextFormatFlags.WordBreak;
+			System.Drawing.Size szText = TextRenderer.MeasureText(text, fnt, new System.Drawing.Size(mmj.Printer.LineWidth*8,10000), tf);
+			Bitmap b=new Bitmap(mmj.Printer.LineWidth*8, szText.Height);
+			Graphics g = Graphics.FromImage(b);
 			g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
 			g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
 			g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-			TextRenderer.DrawText(g, text, fnt, new System.Drawing.Point(0, 0), Color.Black);
+			TextRenderer.DrawText(g, text, fnt, new System.Drawing.Point(0, 0), Color.Black, tf);
 			g.Flush();
 			await Task.Run(() => PrintBitmap(b));
 			g.Dispose();
@@ -194,7 +197,7 @@ namespace paperangapp {
 				}
 			}
 			logger.Debug($"Have {img.Length} bytes of print data ({mmj.Printer.LineWidth * 8}x{hSzImg}@1bpp)");
-			await Task.Run(() => mmj.PrintBytes(iimg, false));
+			await mmj.PrintBytesAsync(iimg, false);
 		}
 		#region GDIBitmap1bpp
 		static Bitmap CopyToBpp(Bitmap b) {

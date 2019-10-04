@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using liblogtiny;
 using libpaperang.Helpers;
 using libpaperang.Interfaces;
@@ -49,26 +50,17 @@ namespace libpaperang.Main {
 			Feed(0);
 			NoOp();
 		}
-		public bool HandshakeAsync() {
-			Handshake();
-			return true;
-		}
+		public async Task HandshakeAsync() => await Task.Run(() => Handshake());
 		public void WriteBytes(byte[] packet) {
 			logger?.Trace($"Writing packet with length {packet.Length} to printer");
 			_ = Printer.WriteBytes(packet);
 		}
-		public bool WriteBytesAsync(byte[] packet) {
-			WriteBytes(packet);
-			return true;
-		}
+		public async Task WriteBytesAsync(byte[] packet) => await Task.Run(() => WriteBytes(packet));
 		public void WriteBytes(byte[] packet, int ms) {
 			logger?.Trace($"Writing packet with length {packet.Length} to printer with delay of {ms}ms");
 			_ = Printer.WriteBytes(packet, ms);
 		}
-		public bool WriteBytesAsync(byte[] packet, int ms) {
-			WriteBytes(packet, ms);
-			return true;
-		}
+		public async Task WriteBytesAsync(byte[] packet, int ms) => await Task.Run(() => WriteBytes(packet, ms));
 		public void Feed(uint ms) {
 			logger?.Trace($"Feeding for {ms}ms");
 			WriteBytes(
@@ -76,21 +68,16 @@ namespace libpaperang.Main {
 					Transform.Arg(BaseTypes.Operations.LineFeed, ms),
 				Crc));
 		}
-		public bool FeedAsync(uint ms) {
-			Feed(ms);
-			return true;
-		}
+		public async Task FeedAsync(uint ms) => await Task.Run(() => Feed(ms));
 		public void NoOp() => WriteBytes(
 			Transform.Packet(BaseTypes.Operations.NoOp, new byte[] { 0, 0 }, Crc));
+		public async Task NoOpAsync() => await Task.Run(() => NoOp());
 		public void Poll() {
 			logger?.Trace("Polling attached printer");
 			Feed(0);
 			NoOp();
 		}
-		public bool PollAsync() {
-			Poll();
-			return true;
-		}
+		public async Task PollAsync() => await Task.Run(() => Poll());
 		public void PrintBytes(byte[] data, bool autofeed = true) {
 			logger?.Trace($"PrintBytes() invoked with data length of {data.Length}");
 			List<byte[]> segments = data
@@ -108,9 +95,6 @@ namespace libpaperang.Main {
 			if(autofeed)
 				Feed(185);
 		}
-		public bool PrintBytesAsync(byte[] data, bool autofeed=true) {
-			PrintBytes(data, autofeed);
-			return true;
-		}
+		public async Task PrintBytesAsync(byte[] data, bool autofeed = true) => await Task.Run(() => PrintBytes(data, autofeed));
 	}
 }
