@@ -38,10 +38,12 @@ namespace libpaperang.Interfaces {
 		public short BasePrintDelay {
 			get {
 				switch(PrinterVariant) {
+					//A delay when actually -printing- is necessary; moreso with the P2 model, as higher DPI means more packets for the same physical length of paper
+					// and when faced with a print data buffer exhaustion, the printer will simply discard what's in the buffer and start printing whatever data is received after
 					case BaseTypes.Model.P1:
-						return 80;
+						return 100;
 					case BaseTypes.Model.P2:
-						return 140;
+						return 170;
 					default:
 						throw new InvalidOperationException();
 				}
