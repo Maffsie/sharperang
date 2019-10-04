@@ -17,9 +17,34 @@ namespace paperangapp {
 		private ILogTiny logger;
 		private BaseTypes.Connection mmjcx=BaseTypes.Connection.USB;
 		private BaseTypes.Model mmjmd=BaseTypes.Model.None;
-		private IPrinter prtr=new USB(BaseTypes.Model.None); // T1 used as a generic, prtr used soley for the PrinterAvailable attr. all paperang devices tested report the exact same USB identifiers.
+		private IPrinter prtr=new USB(BaseTypes.Model.None);
 		private Paperang mmj=null;
 		private System.Timers.Timer usbpoll;
+		byte[,] bayer2 = {
+			{ 0, 2 },
+			{ 3, 1 }
+		};
+		byte[,] bayer3 = {
+			{ 0, 7, 3 },
+			{ 6, 5, 2 },
+			{ 4, 1, 8 }
+		};
+		byte[,] bayer4 = {
+			{ 0,  8,  2, 10 },
+			{ 12, 4, 14,  6 },
+			{ 3, 11,  1,  9 },
+			{ 15, 7, 13,  5 }
+		};
+		byte[,] bayer8 = {
+			{  0, 48, 12, 60,  3, 51, 15, 63 },
+			{ 32, 16, 44, 28, 35, 19, 47, 31 },
+			{  8, 56,  4, 52, 11, 59,  7, 55 },
+			{ 40, 24, 36, 20, 43, 27, 39, 23 },
+			{  2, 50, 14, 62,  1, 49, 13, 61 },
+			{ 34, 18, 46, 30, 33, 17, 45, 29 },
+			{ 10, 58,  6, 54,  9, 57,  5, 53 },
+			{ 42, 26, 38, 22, 41, 25, 37, 21 }
+		};
 		//private uint dThresh=127;
 		private enum AppState {
 			UnInitNoDev,
@@ -28,6 +53,7 @@ namespace paperangapp {
 		};
 		private AppState state=AppState.UnInitDev;
 		// TODO: is it out of scope for this library to provide functionality for printing bitmap data?
+		private byte Clamp(int v) => Convert.ToByte(v < 0 ? 0 : v > 255 ? 255 : v);
 		public MainWindow() {
 			InitializeComponent();
 			logger = new LUITextbox();
@@ -39,6 +65,46 @@ namespace paperangapp {
 			usbpoll.Elapsed += EvtUsbPoll;
 			usbpoll.Start();
 			logger.Verbose("USB presence interval event started");
+			byte _szW; byte _szH; int _szM; int _sc;
+			//bayer2
+			_szW = (byte)(bayer2.GetUpperBound(1) + 1);
+			_szH = (byte)(bayer2.GetUpperBound(0) + 1);
+			_szM = _szW * _szH;
+			_sc = 255 / _szM;
+			for(int mx = 0; mx < _szW; mx++) {
+				for(int my = 0; my < _szH; my++)
+					bayer2[mx, my] = Clamp(bayer2[mx, my] * _sc);
+			}
+
+			//bayer3
+			_szW = (byte)(bayer3.GetUpperBound(1) + 1);
+			_szH = (byte)(bayer3.GetUpperBound(0) + 1);
+			_szM = _szW * _szH;
+			_sc = 255 / _szM;
+			for(int mx = 0; mx < _szW; mx++) {
+				for(int my = 0; my < _szH; my++)
+					bayer3[mx, my] = Clamp(bayer3[mx, my] * _sc);
+			}
+
+			//bayer4
+			_szW = (byte)(bayer4.GetUpperBound(1) + 1);
+			_szH = (byte)(bayer4.GetUpperBound(0) + 1);
+			_szM = _szW * _szH;
+			_sc = 255 / _szM;
+			for(int mx = 0; mx < _szW; mx++) {
+				for(int my = 0; my < _szH; my++)
+					bayer4[mx, my] = Clamp(bayer4[mx, my] * _sc);
+			}
+
+			//bayer8
+			_szW = (byte)(bayer8.GetUpperBound(1) + 1);
+			_szH = (byte)(bayer8.GetUpperBound(0) + 1);
+			_szM = _szW * _szH;
+			_sc = 255 / _szM;
+			for(int mx = 0; mx < _szW; mx++) {
+				for(int my = 0; my < _szH; my++)
+					bayer8[mx, my] = Clamp(bayer8[mx, my] * _sc);
+			}
 		}
 
 		private void EvtUsbPoll(object sender, ElapsedEventArgs e) => _ = Dispatcher.BeginInvoke(new invDgtUsbPoll(DgtUsbPoll));
@@ -140,7 +206,7 @@ namespace paperangapp {
 			g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
 			TextRenderer.DrawText(g, text, fnt, new System.Drawing.Point(0, 0), Color.Black, tf);
 			g.Flush();
-			await Task.Run(() => PrintBitmap(b));
+			await Task.Run(() => PrintBitmap(b, false));
 			g.Dispose();
 			b.Dispose();
 		}
@@ -166,7 +232,7 @@ namespace paperangapp {
 				logger.Debug($"Loaded image '{fn}'");
 				logger.Debug("Disposed of dialog");
 				Bitmap bimg=new Bitmap(_, mmj.Printer.LineWidth*8,
-				(int)(mmj.Printer.LineWidth*8*(double)((double)_.Height/(double)_.Width)));
+				(int)(mmj.Printer.LineWidth*8*((double)_.Height/_.Width)));
 				logger.Debug("Loaded image as Bitmap");
 				_.Dispose();
 				logger.Debug("Disposed of Image");
@@ -175,7 +241,18 @@ namespace paperangapp {
 			await Task.Run(() => PrintBitmap(bmg));
 			bmg.Dispose();
 		}
-		private async Task PrintBitmap(Bitmap bimg) {
+		private async Task PrintBitmap(Bitmap bimg, bool dither = true) {
+			if(dither) {
+				logger.Trace("Dithering input bitmap");
+				bimg = AForge.Imaging.Filters.Grayscale.CommonAlgorithms.Y.Apply(bimg);
+				AForge.Imaging.Filters.OrderedDithering f = new
+				AForge.Imaging.Filters.OrderedDithering(bayer4);
+				//f.FormatTranslations.Clear();
+				//f.FormatTranslations[PixelFormat.Format1bppIndexed] = PixelFormat.Format1bppIndexed;
+				bimg = f.Apply(bimg);
+				//bimg = new Accord.Imaging.Filters.BayerDithering().Apply(bimg);
+				logger.Debug("Dithered Bitmap");
+			}
 			bimg = CopyToBpp(bimg);
 			logger.Debug("Converted Bitmap to 1-bit");
 			int hSzImg=bimg.Height;

@@ -10,7 +10,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "paperangapp", "paperangapp\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "libpaperang", "libpaperang\libpaperang.csproj", "{A429CCEB-9331-4CD9-B3C0-A8F736732DEA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "liblogtiny", "liblogtiny\liblogtiny.csproj", "{B7D242A8-F9DE-450B-9C87-5519CA782193}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "liblogtiny", "liblogtiny\liblogtiny.csproj", "{B7D242A8-F9DE-450B-9C87-5519CA782193}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
