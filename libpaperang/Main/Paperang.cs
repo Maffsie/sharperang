@@ -40,7 +40,7 @@ namespace libpaperang.Main {
 			Handshake();
 		}
 		public void Handshake() {
-			_ = Printer.WriteBytes(
+			WriteBytes(
 				Transform.Packet(
 					BaseTypes.Operations.CrcTransmit,
 					Crc.GetCrcIvBytes(),
@@ -49,13 +49,25 @@ namespace libpaperang.Main {
 			Feed(0);
 			NoOp();
 		}
+		public bool HandshakeAsync() {
+			Handshake();
+			return true;
+		}
 		public void WriteBytes(byte[] packet) {
 			logger?.Trace($"Writing packet with length {packet.Length} to printer");
 			_ = Printer.WriteBytes(packet);
 		}
+		public bool WriteBytesAsync(byte[] packet) {
+			WriteBytes(packet);
+			return true;
+		}
 		public void WriteBytes(byte[] packet, int ms) {
 			logger?.Trace($"Writing packet with length {packet.Length} to printer with delay of {ms}ms");
 			_ = Printer.WriteBytes(packet, ms);
+		}
+		public bool WriteBytesAsync(byte[] packet, int ms) {
+			WriteBytes(packet, ms);
+			return true;
 		}
 		public void Feed(uint ms) {
 			logger?.Trace($"Feeding for {ms}ms");
@@ -64,12 +76,20 @@ namespace libpaperang.Main {
 					Transform.Arg(BaseTypes.Operations.LineFeed, ms),
 				Crc));
 		}
+		public bool FeedAsync(uint ms) {
+			Feed(ms);
+			return true;
+		}
 		public void NoOp() => WriteBytes(
 			Transform.Packet(BaseTypes.Operations.NoOp, new byte[] { 0, 0 }, Crc));
 		public void Poll() {
 			logger?.Trace("Polling attached printer");
 			Feed(0);
 			NoOp();
+		}
+		public bool PollAsync() {
+			Poll();
+			return true;
 		}
 		public void PrintBytes(byte[] data, bool autofeed = true) {
 			logger?.Trace($"PrintBytes() invoked with data length of {data.Length}");
@@ -87,6 +107,10 @@ namespace libpaperang.Main {
 				Printer.BasePrintDelay + (b.Length / Printer.LineWidth)));
 			if(autofeed)
 				Feed(185);
+		}
+		public bool PrintBytesAsync(byte[] data, bool autofeed=true) {
+			PrintBytes(data, autofeed);
+			return true;
 		}
 	}
 }

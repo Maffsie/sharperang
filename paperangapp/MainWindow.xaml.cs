@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Forms;
@@ -113,15 +114,19 @@ namespace paperangapp {
 			} catch(Exception) {
 			} finally { }
 		}
-		private void BtFeed_Click(object sender, RoutedEventArgs e) => mmj.Feed((uint)slFeedTime.Value);
-		private void BtPrintText_Click(object sender, RoutedEventArgs e) {
+		private async void BtFeed_Click(object sender, RoutedEventArgs e) => await FeedAsync((uint)slFeedTime.Value);
+		private async Task FeedAsync(uint time) => await Task.Run(() => mmj.Feed(time));
+		private async void BtPrintText_Click(object sender, RoutedEventArgs e) {
 			if(!(txInput.Text.Length > 0)) {
 				logger.Warn("PrintText event but nothing to print.");
 				return;
 			}
-			Font fnt=new Font(txFont.Text, int.Parse(txSzF.Text));
+			await PrintTextAsync(txInput.Text, txFont.Text, int.Parse(txSzF.Text));
+		}
+		private async Task PrintTextAsync(string text, string font, int szf) {
+			Font fnt=new Font(font, szf);
 			Graphics g=Graphics.FromImage(new Bitmap(mmj.Printer.LineWidth*8, 1));
-			System.Drawing.Size szText = TextRenderer.MeasureText(g, txInput.Text, fnt);
+			System.Drawing.Size szText = TextRenderer.MeasureText(g, text, fnt);
 			//SizeF szText=g.MeasureString(txInput.Text, fnt);
 			g.Dispose();
 			Bitmap b=new Bitmap(mmj.Printer.LineWidth*8, (int)szText.Height);
@@ -130,13 +135,14 @@ namespace paperangapp {
 			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
 			g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
 			g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-			TextRenderer.DrawText(g, txInput.Text, fnt, new System.Drawing.Point(0, 0), Color.Black);
+			TextRenderer.DrawText(g, text, fnt, new System.Drawing.Point(0, 0), Color.Black);
 			g.Flush();
-			PrintBitmap(b);
+			await Task.Run(() => PrintBitmap(b));
 			g.Dispose();
 			b.Dispose();
 		}
-		private void BtPrintImage_Click(object sender, RoutedEventArgs e) {
+		private async void BtPrintImage_Click(object sender, RoutedEventArgs e) => await PrintImageAsync();
+		private async Task PrintImageAsync() {
 			logger.Debug("Invoking file selection dialogue.");
 			OpenFileDialog r = new OpenFileDialog {
 				Title="Select 1 (one) image file",
@@ -149,20 +155,24 @@ namespace paperangapp {
 				r.Dispose();
 				return;
 			}
-			logger.Debug("Loading image for print");
-			Image _=Image.FromFile(r.FileName);
-			logger.Debug("Loaded image " + r.FileName);
+			string fn=r.FileName;
 			r.Dispose();
-			logger.Debug("Disposed of dialog");
-			Bitmap bimg=new Bitmap(_, mmj.Printer.LineWidth*8,
+			Bitmap bmg = await Task.Run(() => {
+				logger.Debug($"Loading image '{fn}' for print");
+				Image _=Image.FromFile(fn);
+				logger.Debug($"Loaded image '{fn}'");
+				logger.Debug("Disposed of dialog");
+				Bitmap bimg=new Bitmap(_, mmj.Printer.LineWidth*8,
 				(int)(mmj.Printer.LineWidth*8*(double)((double)_.Height/(double)_.Width)));
-			logger.Debug("Loaded image as Bitmap");
-			_.Dispose();
-			logger.Debug("Disposed of Image");
-			PrintBitmap(bimg);
-			bimg.Dispose();
+				logger.Debug("Loaded image as Bitmap");
+				_.Dispose();
+				logger.Debug("Disposed of Image");
+				return bimg;
+			});
+			await Task.Run(() => PrintBitmap(bmg));
+			bmg.Dispose();
 		}
-		private void PrintBitmap(Bitmap bimg) {
+		private async Task PrintBitmap(Bitmap bimg) {
 			bimg = CopyToBpp(bimg);
 			logger.Debug("Converted Bitmap to 1-bit");
 			int hSzImg=bimg.Height;
@@ -184,7 +194,7 @@ namespace paperangapp {
 				}
 			}
 			logger.Debug($"Have {img.Length} bytes of print data ({mmj.Printer.LineWidth * 8}x{hSzImg}@1bpp)");
-			mmj.PrintBytes(iimg, false);
+			await Task.Run(() => mmj.PrintBytes(iimg, false));
 		}
 		#region GDIBitmap1bpp
 		static Bitmap CopyToBpp(Bitmap b) {
