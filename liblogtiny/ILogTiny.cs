@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace liblogtiny {
+﻿namespace liblogtiny {
 	public partial class LogTiny {
 		public enum LogLevel {
 			Trace,

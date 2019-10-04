@@ -1,5 +1,5 @@
-﻿using liblogtiny;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using liblogtiny;
 
 namespace paperangapp {
 	class LUITextbox : ILogTiny, INotifyPropertyChanged {
@@ -11,13 +11,13 @@ namespace paperangapp {
 			//get { return _LogBuffer; }
 			get => _LogBuffer;
 			set {
-				if (value == _LogBuffer) return;
-				if (value == "!clearlog") _LogBuffer = "";
-				else _LogBuffer = value + "\n" + _LogBuffer;
+				if(value == _LogBuffer)
+					return;
+				_LogBuffer = value == "!clearlog" ? "" : value + "\n" + _LogBuffer;
 				OnPropertyChanged("LogBuffer");
 			}
 		}
-		public void ClearBuffer() => LogBuffer="!clearlog";
+		public void ClearBuffer() => LogBuffer = "!clearlog";
 		public void Trace(string msg) => Log(LogTiny.LogLevel.Trace, msg);
 		public void Debug(string msg) => Log(LogTiny.LogLevel.Debug, msg);
 		public void Verbose(string msg) => Log(LogTiny.LogLevel.Verbose, msg);
@@ -25,7 +25,7 @@ namespace paperangapp {
 		public void Warn(string msg) => Log(LogTiny.LogLevel.Warn, msg);
 		public void Error(string msg) => Log(LogTiny.LogLevel.Error, msg);
 		public void Critical(string msg) => Log(LogTiny.LogLevel.Critical, msg);
-		public void Log(LogTiny.LogLevel level, string msg) => LogBuffer=$"{level}: {msg}";
-		public void Raw(string msg) => LogBuffer=msg;
+		public void Log(LogTiny.LogLevel level, string msg) => LogBuffer = $"{level}: {msg}";
+		public void Raw(string msg) => LogBuffer = msg;
 	}
 }

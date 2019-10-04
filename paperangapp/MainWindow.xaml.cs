@@ -1,15 +1,14 @@
-﻿using liblogtiny;
-using libpaperang;
-using libpaperang.Interfaces;
-using libpaperang.Main;
-using System;
-using System.Timers;
-using System.Windows;
-using System.Windows.Forms;
-//testing
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Timers;
+using System.Windows;
+using System.Windows.Forms;
+using liblogtiny;
+using libpaperang;
+using libpaperang.Interfaces;
+using libpaperang.Main;
 
 namespace paperangapp {
 	public partial class MainWindow : Window {
@@ -25,7 +24,7 @@ namespace paperangapp {
 			UnInitDev,
 			InitDev
 		};
-		private AppState state=AppState.UnInitNoDev;
+		private AppState state=AppState.UnInitDev;
 		// TODO: is it out of scope for this library to provide functionality for printing bitmap data?
 		public MainWindow() {
 			InitializeComponent();
@@ -35,14 +34,14 @@ namespace paperangapp {
 			usbpoll = new System.Timers.Timer(200) {
 				AutoReset = true
 			};
-			usbpoll.Elapsed += evtUsbPoll;
+			usbpoll.Elapsed += EvtUsbPoll;
 			usbpoll.Start();
 			logger.Verbose("USB presence interval event started");
 		}
 
-		private void evtUsbPoll(object sender, ElapsedEventArgs e) =>_ = Dispatcher.BeginInvoke(new invDgtUsbPoll(dgtUsbPoll));
+		private void EvtUsbPoll(object sender, ElapsedEventArgs e) => _ = Dispatcher.BeginInvoke(new invDgtUsbPoll(DgtUsbPoll));
 		private delegate void invDgtUsbPoll();
-		private void dgtUsbPoll() {
+		private void DgtUsbPoll() {
 			try {
 				if(state == AppState.UnInitNoDev && prtr.PrinterAvailable) {
 					btInitUSB.IsEnabled = true;
@@ -63,7 +62,8 @@ namespace paperangapp {
 
 		~MainWindow() {
 			logger.Warn("Application closing");
-			if(mmj!=null) USBDeInit();
+			if(mmj != null)
+				USBDeInit();
 		}
 		private void BtClearLog_Click(object sender, RoutedEventArgs e) =>
 			logger.Raw("!clearlog");
@@ -115,9 +115,14 @@ namespace paperangapp {
 		}
 		private void BtFeed_Click(object sender, RoutedEventArgs e) => mmj.Feed((uint)slFeedTime.Value);
 		private void BtPrintText_Click(object sender, RoutedEventArgs e) {
+			if(!(txInput.Text.Length > 0)) {
+				logger.Warn("PrintText event but nothing to print.");
+				return;
+			}
 			Font fnt=new Font(txFont.Text, int.Parse(txSzF.Text));
 			Graphics g=Graphics.FromImage(new Bitmap(mmj.Printer.LineWidth*8, 1));
-			SizeF szText=g.MeasureString(txInput.Text, fnt);
+			System.Drawing.Size szText = TextRenderer.MeasureText(g, txInput.Text, fnt);
+			//SizeF szText=g.MeasureString(txInput.Text, fnt);
 			g.Dispose();
 			Bitmap b=new Bitmap(mmj.Printer.LineWidth*8, (int)szText.Height);
 			g = Graphics.FromImage(b);
@@ -125,34 +130,37 @@ namespace paperangapp {
 			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
 			g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
 			g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-			g.DrawString(txInput.Text, fnt, Brushes.Black, new PointF(0,0));
+			TextRenderer.DrawText(g, txInput.Text, fnt, new System.Drawing.Point(0, 0), Color.Black);
 			g.Flush();
 			PrintBitmap(b);
 			g.Dispose();
 			b.Dispose();
 		}
 		private void BtPrintImage_Click(object sender, RoutedEventArgs e) {
-			logger.Debug("Loading image for print");
+			logger.Debug("Invoking file selection dialogue.");
 			OpenFileDialog r = new OpenFileDialog {
 				Title="Select 1 (one) image file",
 				Multiselect=false,
 				Filter="PNG files|*.png|JPEG files|*.jpg;*.jpeg|Jraphics Interchange Format files|*.gif|Bitte-Mappe files|*.bmp|All of the above|*.jpg;*.jpeg;*.png;*.gif;*.bmp",
 				AutoUpgradeEnabled=true
 			};
-			if (r.ShowDialog() == System.Windows.Forms.DialogResult.Cancel) {
-				logger.Debug("Image load cancelled");
+			if(r.ShowDialog() == System.Windows.Forms.DialogResult.Cancel) {
+				logger.Warn("PrintImage event but no file was selected.");
+				r.Dispose();
 				return;
 			}
+			logger.Debug("Loading image for print");
 			Image _=Image.FromFile(r.FileName);
 			logger.Debug("Loaded image " + r.FileName);
 			r.Dispose();
 			logger.Debug("Disposed of dialog");
-			Bitmap bimg=new Bitmap(_, (mmj.Printer.LineWidth*8),
-				(int)((double)(mmj.Printer.LineWidth*8)*(double)((double)_.Height/(double)_.Width)));
+			Bitmap bimg=new Bitmap(_, mmj.Printer.LineWidth*8,
+				(int)(mmj.Printer.LineWidth*8*(double)((double)_.Height/(double)_.Width)));
 			logger.Debug("Loaded image as Bitmap");
 			_.Dispose();
 			logger.Debug("Disposed of Image");
 			PrintBitmap(bimg);
+			bimg.Dispose();
 		}
 		private void PrintBitmap(Bitmap bimg) {
 			bimg = CopyToBpp(bimg);
@@ -172,17 +180,12 @@ namespace paperangapp {
 			for(int h = 0; h < hSzImg; h++) {
 				for(int w = 0; w < mmj.Printer.LineWidth; w++) {
 					iimg[(mmj.Printer.LineWidth * (hSzImg - 1 - h)) + (mmj.Printer.LineWidth - 1 - w)] = (byte)~
-						(img[startoffset + (mmj.Printer.LineWidth * h) + (mmj.Printer.LineWidth - 1 - w)]);
+						img[startoffset + (mmj.Printer.LineWidth * h) + (mmj.Printer.LineWidth - 1 - w)];
 				}
 			}
-			logger.Debug($"Have {img.Length} bytes of print data ({mmj.Printer.LineWidth*8}x{hSzImg}@1bpp)");
+			logger.Debug($"Have {img.Length} bytes of print data ({mmj.Printer.LineWidth * 8}x{hSzImg}@1bpp)");
 			mmj.PrintBytes(iimg, false);
-			//mmj.Feed(175);
 		}
-		static uint BitSwap1(uint x) => ((x & 0x55555555u) << 1) | ((x & (~0x55555555u)) >> 1);
-		static uint BitSwap2(uint x) => ((x & 0x33333333u) << 2) | ((x & (~0x33333333u)) >> 2);
-		static uint BitSwap4(uint x) => ((x & 0x0f0f0f0fu) << 4) | ((x & (~0x0f0f0f0fu)) >> 4);
-		static uint BitSwap(uint x) => BitSwap4(BitSwap2(BitSwap1(x)));
 		#region GDIBitmap1bpp
 		static Bitmap CopyToBpp(Bitmap b) {
 			int w=b.Width, h=b.Height;
@@ -198,11 +201,11 @@ namespace paperangapp {
 				biXPelsPerMeter=1000000,
 				biYPelsPerMeter=1000000
 			};
-			bmi.biClrUsed=2;
-			bmi.biClrImportant=2;
-			bmi.cols=new uint[256];
-			bmi.cols[0]=MAKERGB(0, 0, 0);
-			bmi.cols[1]=MAKERGB(255, 255, 255);
+			bmi.biClrUsed = 2;
+			bmi.biClrImportant = 2;
+			bmi.cols = new uint[256];
+			bmi.cols[0] = MAKERGB(0, 0, 0);
+			bmi.cols[1] = MAKERGB(255, 255, 255);
 			IntPtr hbm0 = CreateDIBSection(IntPtr.Zero,ref bmi,DIB_RGB_COLORS,out _,IntPtr.Zero,0);
 			IntPtr sdc = GetDC(IntPtr.Zero);
 			IntPtr hdc = CreateCompatibleDC(sdc);
@@ -248,7 +251,7 @@ namespace paperangapp {
 			[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValArray, SizeConst=256)]
 			public uint[] cols;
 		}
-		static uint MAKERGB(int r, int g, int b) => ((uint)(b&255)) | ((uint)((r&255)<<8)) | ((uint)((g&255)<<16));
+		static uint MAKERGB(int r, int g, int b) => ((uint)(b & 255)) | ((uint)((r & 255) << 8)) | ((uint)((g & 255) << 16));
 		#endregion
 	}
 }

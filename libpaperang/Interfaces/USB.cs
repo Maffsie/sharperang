@@ -10,7 +10,7 @@ namespace libpaperang.Interfaces {
 		// constants
 		private const ushort iV = 0x4348;
 		private const ushort iP = 0x5584;
-		private const short MaxDataSize = 1008;
+		public uint MaximumDataSize => 1008;
 
 		// types
 		private struct UsbComms {
@@ -20,21 +20,35 @@ namespace libpaperang.Interfaces {
 			public UsbEndpointWriter tx;
 		}
 		private UsbComms Printer;
-		private BaseTypes.Model iModel;
-		private bool _initialised=false;
+
 		public short LineWidth {
 			get {
-				switch (iModel) {
-					case BaseTypes.Model.P1: return 48;
-					case BaseTypes.Model.P2: return 72;
-					case BaseTypes.Model.P2S: return 72; //assumption
-					case BaseTypes.Model.T1: throw new PrinterVariantNotSupportedException();
-					default: throw new InvalidOperationException();
+				switch(PrinterVariant) {
+					case BaseTypes.Model.P1:
+						return 48;
+					case BaseTypes.Model.P2:
+						return 72;
+					case BaseTypes.Model.T1:
+						throw new PrinterVariantNotSupportedException();
+					default:
+						throw new InvalidOperationException();
+				}
+			}
+		}
+		public short BasePrintDelay {
+			get {
+				switch(PrinterVariant) {
+					case BaseTypes.Model.P1:
+						return 80;
+					case BaseTypes.Model.P2:
+						return 140;
+					default:
+						throw new InvalidOperationException();
 				}
 			}
 		}
 		public BaseTypes.Connection ConnectionMethod => BaseTypes.Connection.USB;
-		public BaseTypes.Model PrinterVariant => iModel;
+		public BaseTypes.Model PrinterVariant { get; private set; }
 		public BaseTypes.State Status => BaseTypes.State.Offline;
 		public List<BaseTypes.Printer> AvailablePrinters {
 			get {
@@ -52,33 +66,36 @@ namespace libpaperang.Interfaces {
 			}
 		}
 		public bool PrinterAvailable => AvailablePrinters.Count > 0;
-		public bool PrinterInitialised => _initialised;
+		public bool PrinterInitialised { get; private set; } = false;
 		public bool PrinterOpen => Printer.handle?.IsOpen ?? false;
+		public void OpenPrinter(BaseTypes.Printer printer) {
+			bool res;
+			try {
+				res = ((UsbRegistry)printer.Instance).Open(out Printer.handle);
+			} catch(Exception) {
+				throw new PrinterNotAvailableException();
+			}
+			if(!res)
+				throw new PrinterNotAvailableException();
+		}
 		public void ClosePrinter() => Printer.handle?.Close();
+		public void Initialise() {
+			if(!PrinterOpen)
+				throw new PrinterNotInitialisedException();
+			//WinUSB-specific
+			Printer.iface = Printer.handle as IUsbDevice;
+			_ = Printer.iface?.SetConfiguration(1);
+			_ = Printer.iface?.ClaimInterface(0);
+			Printer.rx = Printer.handle.OpenEndpointReader(ReadEndpointID.Ep01);
+			Printer.tx = Printer.handle.OpenEndpointWriter(WriteEndpointID.Ep02);
+			PrinterInitialised = true;
+		}
 		public void Deinitialise() {
 			Printer.rx?.Dispose();
 			Printer.tx?.Dispose();
 			_ = Printer.iface?.ReleaseInterface(0);
 			_ = Printer.iface?.Close();
-		}
-		public void Initialise() {
-			if (!PrinterOpen) throw new PrinterNotInitialisedException();
-			//WinUSB-specific
-			Printer.iface=Printer.handle as IUsbDevice;
-			_=Printer.iface?.SetConfiguration(1);
-			_=Printer.iface?.ClaimInterface(0);
-			Printer.rx=Printer.handle.OpenEndpointReader(ReadEndpointID.Ep01);
-			Printer.tx=Printer.handle.OpenEndpointWriter(WriteEndpointID.Ep02);
-			_initialised = true;
-		}
-		public void OpenPrinter(BaseTypes.Printer printer) {
-			bool res;
-			try {
-				res=((UsbRegistry)printer.Instance).Open(out Printer.handle);
-			} catch (Exception) {
-				throw new PrinterNotAvailableException();
-			}
-			if (!res) throw new PrinterNotAvailableException();
+			ClosePrinter();
 		}
 		public byte[] ReadBytes() {
 			byte[] readbuf=new byte[1024];
@@ -91,6 +108,6 @@ namespace libpaperang.Interfaces {
 			Thread.Sleep(delay);
 			return _;
 		}
-		public USB(BaseTypes.Model model) => iModel=model;
+		public USB(BaseTypes.Model model) => PrinterVariant = model;
 	}
 }

@@ -1,8 +1,8 @@
-﻿using libpaperang.Helpers;
-using libpaperang.Interfaces;
-using liblogtiny;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Collections.Generic;
+using liblogtiny;
+using libpaperang.Helpers;
+using libpaperang.Interfaces;
 
 namespace libpaperang.Main {
 	public class Paperang {
@@ -75,7 +75,7 @@ namespace libpaperang.Main {
 			logger?.Trace($"PrintBytes() invoked with data length of {data.Length}");
 			List<byte[]> segments = data
 				.Select((b,i) => new {Index=i,Value=b })
-				.GroupBy(b=>b.Index/1008)
+				.GroupBy(b=>b.Index/Printer.MaximumDataSize)
 				.Select(b=>b.Select(bb=>bb.Value).ToArray())
 				.ToList();
 			logger?.Trace($"data split into {segments.Count} segment(s)");
@@ -84,7 +84,9 @@ namespace libpaperang.Main {
 					Transform.Arg(BaseTypes.Operations.Print, (uint)b.Length),
 					b,
 					Crc),
-				200-(b.Length/Printer.LineWidth)));
+				Printer.BasePrintDelay + (b.Length / Printer.LineWidth)));
+			if(autofeed)
+				Feed(185);
 		}
 	}
 }

@@ -55,6 +55,8 @@ namespace libpaperang {
 	}
 	public interface IPrinter {
 		short LineWidth { get; }
+		short BasePrintDelay { get; }
+		uint MaximumDataSize { get; }
 		BaseTypes.Connection ConnectionMethod { get; }
 		BaseTypes.Model PrinterVariant { get; }
 		BaseTypes.State Status { get; }
