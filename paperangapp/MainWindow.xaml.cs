@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AForge.Imaging.Filters;
+using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -226,13 +227,16 @@ namespace paperangapp {
 			}
 			string fn=r.FileName;
 			r.Dispose();
+			//I would love to know how spawning this in another thread via Task.Run((lambda)) and waiting for it to finish via `await`
+			// is non-blocking, while simply running the code here is blocking.
+			//someone who is good at threading please help my family is dying
 			Bitmap bmg = await Task.Run(() => {
 				logger.Debug($"Loading image '{fn}' for print");
 				Image _=Image.FromFile(fn);
 				logger.Debug($"Loaded image '{fn}'");
 				logger.Debug("Disposed of dialog");
 				Bitmap bimg=new Bitmap(_, mmj.Printer.LineWidth*8,
-				(int)(mmj.Printer.LineWidth*8*((double)_.Height/_.Width)));
+					(int)(mmj.Printer.LineWidth*8*((double)_.Height/_.Width)));
 				logger.Debug("Loaded image as Bitmap");
 				_.Dispose();
 				logger.Debug("Disposed of Image");
@@ -244,13 +248,10 @@ namespace paperangapp {
 		private async Task PrintBitmap(Bitmap bimg, bool dither = true) {
 			if(dither) {
 				logger.Trace("Dithering input bitmap");
-				bimg = AForge.Imaging.Filters.Grayscale.CommonAlgorithms.Y.Apply(bimg);
-				AForge.Imaging.Filters.OrderedDithering f = new
-				AForge.Imaging.Filters.OrderedDithering(bayer4);
-				//f.FormatTranslations.Clear();
-				//f.FormatTranslations[PixelFormat.Format1bppIndexed] = PixelFormat.Format1bppIndexed;
+				bimg = Grayscale.CommonAlgorithms.Y.Apply(bimg);
+				OrderedDithering f = new
+				OrderedDithering(bayer4);
 				bimg = f.Apply(bimg);
-				//bimg = new Accord.Imaging.Filters.BayerDithering().Apply(bimg);
 				logger.Debug("Dithered Bitmap");
 			}
 			bimg = CopyToBpp(bimg);
