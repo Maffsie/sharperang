@@ -78,6 +78,7 @@ namespace libpaperang.Main {
 			NoOp();
 		}
 		public async Task PollAsync() => await Task.Run(() => Poll());
+		//Improvement note - feed delay should scale up dependent on how dark the image is! dark parts take longer to print than light parts. maybe add 1ms of delay for every 50-100 dark pixels??
 		public void PrintBytes(byte[] data, bool autofeed = true) {
 			logger?.Trace($"PrintBytes() invoked with data length of {data.Length}");
 			List<byte[]> segments = data
